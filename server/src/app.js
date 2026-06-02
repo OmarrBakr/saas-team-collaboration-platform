@@ -8,6 +8,9 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
+// routes
+const authRouter = require('./routes/auth');
+
 // middleware
 const notFoundMiddleware = require('./middleware/not-found');
 const errorHandlerMiddleware = require('./middleware/error-handler');

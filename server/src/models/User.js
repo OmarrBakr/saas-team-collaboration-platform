@@ -1,0 +1,74 @@
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const UserSchema = new mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+      required: [true, 'Please provide first name'],
+      trim: true,
+      maxlength: [20, 'firstName must be at most 20 characters long'],
+      minlength: [2, 'firstName must be at least 2 characters long'],
+    },
+    lastName: {
+      type: String,
+      required: [true, 'Please provide last name'],
+      trim: true,
+      maxlength: [20, 'lastName must be at most 20 characters long'],
+      minlength: [2, 'lastName must be at least 2 characters long'],
+    },
+    email: {
+      type: String,
+      required: [true, 'Please provide email'],
+      unique: true,
+      trim: true,
+      lowercase: true,
+      match: [
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+        'Please provide a valid email',
+      ],
+    },
+    password: {
+      type: String,
+      required: [true, 'Please provide a password'],
+      minlength: [8, 'Password must be at least 8 characters long'],
+      select: false,
+      match: [
+        /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$/,
+        'Password must contain at least one digit, one lowercase letter, and one uppercase letter.',
+      ],
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+  },
+  { timestamps: true }
+);
+
+UserSchema.pre('save', async function (next) {
+  if (this.isModified('password')) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+  next();
+});
+
+UserSchema.methods.createJWT = function () {
+  return jwt.sign(
+    { userId: this._id, role: this.role },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_LIFETIME,
+    }
+  );
+};
+
+UserSchema.methods.comparePassword = async function (candidatePassword) {
+  const isMatch = await bcrypt.compare(candidatePassword, this.password);
+  return isMatch;
+};
+
+module.exports = mongoose.model('User', UserSchema);
