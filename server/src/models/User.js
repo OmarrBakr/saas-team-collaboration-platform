@@ -39,10 +39,10 @@ const UserSchema = new mongoose.Schema(
         'Password must contain at least one digit, one lowercase letter, and one uppercase letter.',
       ],
     },
-    role: {
+    refreshToken: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      default: null,
+      select: false,
     },
   },
   { timestamps: true }
@@ -57,13 +57,15 @@ UserSchema.pre('save', async function (next) {
 });
 
 UserSchema.methods.createJWT = function () {
-  return jwt.sign(
-    { userId: this._id, role: this.role },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_LIFETIME,
-    }
-  );
+  return jwt.sign({ userId: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_LIFETIME,
+  });
+};
+
+UserSchema.methods.createRefreshToken = function () {
+  return jwt.sign({ userId: this._id }, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: process.env.REFRESH_TOKEN_LIFETIME,
+  });
 };
 
 UserSchema.methods.comparePassword = async function (candidatePassword) {

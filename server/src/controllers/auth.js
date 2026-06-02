@@ -1,7 +1,9 @@
+const jwt = require('jsonwebtoken');
 const { StatusCodes } = require('http-status-codes');
 
 const User = require('../models/User');
 const { BadRequestError, UnauthenticatedError } = require('../errors');
+const attachCookies = require('../utils/cookies');
 
 const signup = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
@@ -23,7 +25,13 @@ const signup = async (req, res) => {
     password,
   });
 
-  const token = user.createJWT();
+  const accessToken = user.createJWT();
+  const refreshToken = user.createRefreshToken();
+
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  attachCookies(res, accessToken, refreshToken);
 
   res.status(StatusCodes.CREATED).json({
     user: {
@@ -31,7 +39,6 @@ const signup = async (req, res) => {
       lastName: user.lastName,
       email: user.email,
     },
-    token,
   });
 };
 
@@ -54,7 +61,13 @@ const login = async (req, res) => {
     throw new UnauthenticatedError('Invalid credentials');
   }
 
-  const token = user.createJWT();
+  const accessToken = user.createJWT();
+  const refreshToken = user.createRefreshToken();
+
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  attachCookies(res, accessToken, refreshToken);
 
   res.status(StatusCodes.OK).json({
     user: {
@@ -62,11 +75,49 @@ const login = async (req, res) => {
       lastName: user.lastName,
       email: user.email,
     },
-    token,
+  });
+};
+
+const refresh = async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    throw new UnauthenticatedError('Authentication invalid');
+  }
+
+  let payload;
+
+  try {
+    payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+  } catch (error) {
+    throw new UnauthenticatedError('Authentication invalid');
+  }
+
+  const user = await User.findById(payload.userId).select('+refreshToken');
+
+  if (!user || user.refreshToken !== refreshToken) {
+    throw new UnauthenticatedError('Authentication invalid');
+  }
+
+  const accessToken = user.createJWT();
+  const newRefreshToken = user.createRefreshToken();
+
+  user.refreshToken = newRefreshToken;
+  await user.save();
+
+  attachCookies(res, accessToken, newRefreshToken);
+
+  res.status(StatusCodes.OK).json({
+    user: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+    },
   });
 };
 
 module.exports = {
   signup,
   login,
+  refresh,
 };
