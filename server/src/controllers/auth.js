@@ -4,8 +4,10 @@ const { StatusCodes } = require('http-status-codes');
 const User = require('../models/User');
 const { BadRequestError, UnauthenticatedError } = require('../errors');
 const attachCookies = require('../utils/cookies');
+const sendVerificationEmail = require('../utils/sendVerficationEmail');
+const crypto = require('crypto');
 
-const signup = async (req, res) => {
+const register = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
   if (!firstName || !lastName || !email || !password) {
@@ -18,11 +20,14 @@ const signup = async (req, res) => {
     throw new BadRequestError('Email already in use');
   }
 
+  const verificationToken = crypto.randomBytes(40).toString('hex')
+
   const user = await User.create({
     firstName,
     lastName,
     email,
     password,
+    verificationToken
   });
 
   const accessToken = user.createJWT();
@@ -32,6 +37,14 @@ const signup = async (req, res) => {
   await user.save();
 
   attachCookies(res, accessToken, refreshToken);
+
+  const origin = 'http://localhost:3000';
+  await sendVerificationEmail({
+    name: user.firstName,
+    email: user.email,
+    verificationToken: user.verificationToken,
+    origin,
+  });
 
   res.status(StatusCodes.CREATED).json({
     user: {
@@ -116,8 +129,25 @@ const refresh = async (req, res) => {
   });
 };
 
+const verifyEmail = async (req, res) => {
+  const { token: verificationToken, email } = req.body;
+  console.log(email, verificationToken)
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new UnauthenticatedError('Verification Failed');
+  }
+  if (user.verificationToken !== verificationToken) {
+    throw new UnauthenticatedError('Verification Failed');
+  }
+  (user.isVerified = true), (user.verifiedAt = Date.now());
+  user.verificationToken = '';
+  await user.save();
+  res.status(StatusCodes.OK).json({ msg: 'Email Verified' });
+}
+
 module.exports = {
-  signup,
+  register,
   login,
   refresh,
+  verifyEmail,
 };

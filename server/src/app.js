@@ -1,5 +1,6 @@
 const express = require('express');
 require('dotenv').config();
+require('express-async-errors');
 const cookieParser = require('cookie-parser');
 
 const connectDB = require('./db/connect');
