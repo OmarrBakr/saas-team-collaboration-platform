@@ -198,6 +198,105 @@ const resetPassword = async (req, res) => {
   res.status(StatusCodes.OK).json({ msg: 'Password reset' })
 }
 
+const initiateGoogleOAuth = async (req, res) => {
+  const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+  const options = {
+    redirect_uri: process.env.GOOGLE_CALLBACK_URL,
+    client_id: process.env.GOOGLE_CLIENT_ID,
+    access_type: 'offline',
+    response_type: 'code',
+    prompt: 'consent',
+    scope: [
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email',
+    ].join(' '),
+  };
+
+  const qs = new URLSearchParams(options).toString();
+  res.redirect(`${rootUrl}?${qs}`);
+};
+
+const googleOAuthCallback = async (req, res) => {
+  const { code } = req.query;
+
+  if (!code) {
+    throw new BadRequestError('Authorization code not provided');
+  }
+
+  // Exchange code for tokens
+  const tokenUrl = 'https://oauth2.googleapis.com/token';
+  const tokenRes = await fetch(tokenUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      code,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri: process.env.GOOGLE_CALLBACK_URL,
+      grant_type: 'authorization_code',
+    }).toString(),
+  });
+
+  if (!tokenRes.ok) {
+    throw new UnauthenticatedError('Google OAuth token exchange failed');
+  }
+
+  const { access_token } = await tokenRes.json();
+
+  // Get user info
+  const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+    },
+  });
+
+  if (!userRes.ok) {
+    throw new UnauthenticatedError('Failed to fetch user info from Google');
+  }
+
+  const googleUser = await userRes.json();
+  const { id: googleId, email, given_name: firstName, family_name: lastName } = googleUser;
+
+  if (!email) {
+    throw new BadRequestError('Email not returned from Google');
+  }
+
+  // Find or create user
+  let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+  if (user) {
+    if (!user.googleId) {
+      user.googleId = googleId;
+    }
+    user.isVerified = true;
+    user.verificationToken = '';
+    if (!user.verifiedAt) {
+      user.verifiedAt = Date.now();
+    }
+  } else {
+    user = new User({
+      firstName: firstName || 'GoogleUser',
+      lastName,
+      email,
+      googleId,
+      isVerified: true,
+      verifiedAt: Date.now(),
+    });
+  }
+
+  const accessToken = user.createJWT();
+  const refreshToken = user.createRefreshToken();
+
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  attachCookies(res, accessToken, refreshToken);
+
+  res.redirect(process.env.CLIENT_ORIGIN);
+};
+
 module.exports = {
   register,
   login,
@@ -205,4 +304,6 @@ module.exports = {
   verifyEmail,
   forgetPassword,
   resetPassword,
+  initiateGoogleOAuth,
+  googleOAuthCallback,
 };

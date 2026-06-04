@@ -13,7 +13,12 @@ const UserSchema = new mongoose.Schema(
     },
     lastName: {
       type: String,
-      required: [true, 'Please provide last name'],
+      required: [
+        function () {
+          return !this.googleId;
+        },
+        'Please provide last name',
+      ],
       trim: true,
       maxlength: [20, 'lastName must be at most 20 characters long'],
       minlength: [2, 'lastName must be at least 2 characters long'],
@@ -31,7 +36,12 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Please provide a password'],
+      required: [
+        function () {
+          return !this.googleId;
+        },
+        'Please provide a password',
+      ],
       minlength: [8, 'Password must be at least 8 characters long'],
       select: false,
       match: [
@@ -56,12 +66,16 @@ const UserSchema = new mongoose.Schema(
     passwordTokenExpirationDate: {
       type: Date,
     },
+    googleId: {
+      type: String,
+    },
+
   },
   { timestamps: true }
 );
 
 UserSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
+  if (this.isModified('password') && this.password) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   }
