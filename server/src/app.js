@@ -13,13 +13,16 @@ app.use(cookieParser());
 
 // routers
 const authRouter = require('./routes/auth');
+const workspaceRouter = require('./routes/workspace');
 
 // middleware
 const notFoundMiddleware = require('./middleware/not-found');
 const errorHandlerMiddleware = require('./middleware/error-handler');
+const authenticationMiddleware = require('./middleware/authentication');
 
 // routes
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/workspaces', authenticationMiddleware, workspaceRouter);
 
 //error handler
 app.use(notFoundMiddleware);

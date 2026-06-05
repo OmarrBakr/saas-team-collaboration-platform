@@ -2,12 +2,22 @@ const jwt = require('jsonwebtoken');
 const { StatusCodes } = require('http-status-codes');
 
 const User = require('../models/User');
+const Workspace = require('../models/Workspace');
 const { BadRequestError, UnauthenticatedError, NotFoundError } = require('../errors');
 const attachCookies = require('../utils/cookies');
 const sendVerificationEmail = require('../utils/sendVerficationEmail');
 const sendResetPasswordEmail = require('../utils/sendResetPasswordEmail');
 const createHash = require('../utils/createHash');
 const crypto = require('crypto');
+
+const createPersonalWorkspace = async (user) => {
+  await Workspace.create({
+    name: `${user.firstName}'s Workspace`,
+    description: 'Your personal workspace',
+    isPersonal: true,
+    members: [{ user: user._id, role: 'admin', joinedAt: new Date() }],
+  });
+};
 
 const register = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
@@ -37,6 +47,8 @@ const register = async (req, res) => {
 
   user.refreshToken = refreshToken;
   await user.save();
+
+  await createPersonalWorkspace(user);
 
   attachCookies(res, accessToken, refreshToken);
 
@@ -133,7 +145,6 @@ const refresh = async (req, res) => {
 
 const verifyEmail = async (req, res) => {
   const { token: verificationToken, email } = req.body;
-  console.log(email, verificationToken)
   const user = await User.findOne({ email });
   if (!user) {
     throw new UnauthenticatedError('Verification Failed');
@@ -265,6 +276,7 @@ const googleOAuthCallback = async (req, res) => {
 
   // Find or create user
   let user = await User.findOne({ $or: [{ googleId }, { email }] });
+  let isNewUser = false;
 
   if (user) {
     if (!user.googleId) {
@@ -276,6 +288,7 @@ const googleOAuthCallback = async (req, res) => {
       user.verifiedAt = Date.now();
     }
   } else {
+    isNewUser = true;
     user = new User({
       firstName: firstName || 'GoogleUser',
       lastName,
@@ -291,6 +304,10 @@ const googleOAuthCallback = async (req, res) => {
 
   user.refreshToken = refreshToken;
   await user.save();
+
+  if (isNewUser) {
+    await createPersonalWorkspace(user);
+  }
 
   attachCookies(res, accessToken, refreshToken);
 
