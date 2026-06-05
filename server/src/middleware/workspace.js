@@ -41,7 +41,7 @@ const requireWorkspaceMember = async (req, res, next) => {
  * is included in the provided `roles` array.
  *
  * Usage:
- *   router.patch('/...', authenticateUser, requireWorkspaceRole('owner', 'admin'), handler)
+ *   router.patch('/...', authenticateUser, requireWorkspaceRole('admin'), handler)
  */
 const requireWorkspaceRole = (...roles) => {
   return async (req, res, next) => {

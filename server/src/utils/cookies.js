@@ -1,16 +1,20 @@
+const ms = require('ms');
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+};
+
 const attachCookies = (res, accessToken, refreshToken) => {
   res.cookie('accessToken', accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 1000 * 60 * 15,
+    ...cookieOptions,
+    maxAge: ms(process.env.JWT_LIFETIME),
   });
 
   res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 1000 * 60 * 60 * 24 * 7,
+    ...cookieOptions,
+    maxAge: ms(process.env.REFRESH_TOKEN_LIFETIME),
   });
 };
 

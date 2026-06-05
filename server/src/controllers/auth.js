@@ -52,7 +52,7 @@ const register = async (req, res) => {
 
   attachCookies(res, accessToken, refreshToken);
 
-  const origin = 'http://localhost:3000';
+  const origin = 'http://localhost:5000';
   await sendVerificationEmail({
     name: user.firstName,
     email: user.email,

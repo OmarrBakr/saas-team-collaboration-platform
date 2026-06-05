@@ -64,7 +64,7 @@ router.patch(
   updateMemberRole
 );
 
-// Remove a member — owner or admin
+// Remove a member — admin
 router.delete(
   '/:workspaceId/members/:userId',
   requireWorkspaceRole('admin'),
@@ -80,10 +80,10 @@ router.delete(
 
 // ─── Invitations ──────────────────────────────────────────────────────────────
 
-// Send an invitation — owner or admin
+// Send an invitation — admin
 router.post(
   '/:workspaceId/invite',
-  requireWorkspaceRole('owner', 'admin'),
+  requireWorkspaceRole('admin'),
   inviteMember
 );
 

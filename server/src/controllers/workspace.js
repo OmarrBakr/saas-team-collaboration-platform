@@ -14,7 +14,7 @@ const sendInvitationEmail = require('../utils/sendInvitationEmail');
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const INVITATION_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
-const FRONTEND_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+const FRONTEND_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5000';
 
 // ─── Workspace CRUD ───────────────────────────────────────────────────────────
 
