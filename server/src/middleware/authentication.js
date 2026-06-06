@@ -2,8 +2,7 @@ const jwt = require('jsonwebtoken');
 const { UnauthenticatedError } = require('../errors');
 
 const authenticateUser = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  const token = req.cookies?.accessToken || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);
+  const token = req.cookies?.accessToken;
 
   if (!token) {
     throw new UnauthenticatedError('Authentication invalid');
