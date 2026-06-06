@@ -65,6 +65,7 @@ const register = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      isVerified: user.isVerified,
     },
   });
 };
@@ -101,6 +102,7 @@ const login = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      isVerified: user.isVerified,
     },
   });
 };
@@ -134,13 +136,7 @@ const refresh = async (req, res) => {
 
   attachCookies(res, accessToken, newRefreshToken);
 
-  res.status(StatusCodes.OK).json({
-    user: {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-    },
-  });
+  res.status(StatusCodes.OK).json({ msg: 'Access token refreshed' });
 };
 
 const verifyEmail = async (req, res) => {

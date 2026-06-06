@@ -13,6 +13,7 @@ app.use(cookieParser());
 
 // routers
 const authRouter = require('./routes/auth');
+const userRouter = require('./routes/user');
 const workspaceRouter = require('./routes/workspace');
 
 // middleware
@@ -22,6 +23,7 @@ const authenticationMiddleware = require('./middleware/authentication');
 
 // routes
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', authenticationMiddleware, userRouter);
 app.use('/api/v1/workspaces', authenticationMiddleware, workspaceRouter);
 
 //error handler

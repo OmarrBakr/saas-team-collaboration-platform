@@ -8,8 +8,8 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please provide first name'],
       trim: true,
-      maxlength: [20, 'firstName must be at most 20 characters long'],
-      minlength: [2, 'firstName must be at least 2 characters long'],
+      maxlength: [20, 'First name must be at most 20 characters long'],
+      minlength: [2, 'First name must be at least 2 characters long'],
     },
     lastName: {
       type: String,
@@ -20,8 +20,8 @@ const UserSchema = new mongoose.Schema(
         'Please provide last name',
       ],
       trim: true,
-      maxlength: [20, 'lastName must be at most 20 characters long'],
-      minlength: [2, 'lastName must be at least 2 characters long'],
+      maxlength: [20, 'Last name must be at most 20 characters long'],
+      minlength: [2, 'Last name must be at least 2 characters long'],
     },
     email: {
       type: String,

@@ -14,7 +14,6 @@ const sendInvitationEmail = require('../utils/sendInvitationEmail');
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const INVITATION_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
-const FRONTEND_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5000';
 
 // ─── Workspace CRUD ───────────────────────────────────────────────────────────
 
@@ -277,7 +276,7 @@ const inviteMember = async (req, res) => {
     email: email.toLowerCase(),
     workspaceName: workspace.name,
     inviteToken: rawToken,
-    origin: FRONTEND_ORIGIN,
+    origin: process.env.CLIENT_ORIGIN,
   });
 
   res.status(StatusCodes.OK).json({
