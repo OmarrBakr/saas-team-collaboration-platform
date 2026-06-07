@@ -22,6 +22,14 @@ const errorHandlerMiddleware = (err, req, res, next) => {
       .json({ msg: `${field} already exists` });
   }
 
+  if (err.name === 'MulterError') {
+    const message =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? 'Image must be at most 2MB'
+        : err.message;
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: message });
+  }
+
   return res
     .status(StatusCodes.INTERNAL_SERVER_ERROR)
     .json({ msg: 'Something went wrong' });

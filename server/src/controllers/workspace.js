@@ -10,6 +10,10 @@ const {
 } = require('../errors');
 const createHash = require('../utils/createHash');
 const sendInvitationEmail = require('../utils/sendInvitationEmail');
+const {
+  uploadWorkspaceLogo: cloudinaryUploadLogo,
+  deleteWorkspaceLogo: cloudinaryDeleteLogo,
+} = require('../utils/cloudinary');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -23,7 +27,7 @@ const INVITATION_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
  */
 const createWorkspace = async (req, res) => {
   const { userId } = req.user;
-  const { name, description, logo } = req.body;
+  const { name, description } = req.body;
 
   if (!name) {
     throw new BadRequestError('Workspace name is required');
@@ -32,7 +36,6 @@ const createWorkspace = async (req, res) => {
   const workspace = await Workspace.create({
     name,
     description,
-    logo,
     members: [{ user: userId, role: 'admin', joinedAt: new Date() }],
   });
 
@@ -74,18 +77,52 @@ const getWorkspace = async (req, res) => {
  * Update workspace name, description, or logo. Requires 'owner' or 'admin' role.
  */
 const updateWorkspace = async (req, res) => {
-  const { name, description, logo } = req.body;
+  const { name, description } = req.body;
   const workspace = req.workspace;
 
-  if (!name && description === undefined && logo === undefined) {
+  if (!name && description === undefined) {
     throw new BadRequestError('Please provide at least one field to update');
   }
 
   if (name) workspace.name = name;
   if (description !== undefined) workspace.description = description;
-  if (logo !== undefined) workspace.logo = logo;
 
   await workspace.save();
+
+  res.status(StatusCodes.OK).json({ workspace });
+};
+
+/**
+ * PATCH /api/v1/workspaces/:workspaceId/logo
+ * Upload a workspace logo image to Cloudinary.
+ * Requires admin role. Body: multipart/form-data with field "logo".
+ */
+const uploadWorkspaceLogo = async (req, res) => {
+  if (!req.file) {
+    throw new BadRequestError('Please provide a logo image');
+  }
+
+  const workspace = req.workspace;
+  const result = await cloudinaryUploadLogo(req.file.buffer, workspace._id);
+
+  workspace.logo = result.secure_url;
+  await workspace.save();
+
+  res.status(StatusCodes.OK).json({ workspace });
+};
+
+/**
+ * DELETE /api/v1/workspaces/:workspaceId/logo
+ * Remove the workspace logo from Cloudinary and clear the stored URL.
+ */
+const removeWorkspaceLogo = async (req, res) => {
+  const workspace = req.workspace;
+
+  if (workspace.logo) {
+    await cloudinaryDeleteLogo(workspace._id);
+    workspace.logo = '';
+    await workspace.save();
+  }
 
   res.status(StatusCodes.OK).json({ workspace });
 };
@@ -99,6 +136,10 @@ const deleteWorkspace = async (req, res) => {
 
   if (req.memberRole !== 'admin') {
     throw new UnauthorizedError('Only workspace admins can delete it');
+  }
+
+  if (workspace.logo) {
+    await cloudinaryDeleteLogo(workspace._id);
   }
 
   await workspace.deleteOne();
@@ -361,6 +402,8 @@ module.exports = {
   getMyWorkspaces,
   getWorkspace,
   updateWorkspace,
+  uploadWorkspaceLogo,
+  removeWorkspaceLogo,
   deleteWorkspace,
   getWorkspaceMembers,
   updateMemberRole,

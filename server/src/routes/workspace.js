@@ -1,5 +1,7 @@
 const express = require('express');
 
+const upload = require('../middleware/upload');
+
 const {
   requireWorkspaceMember,
   requireWorkspaceRole,
@@ -10,6 +12,8 @@ const {
   getMyWorkspaces,
   getWorkspace,
   updateWorkspace,
+  uploadWorkspaceLogo,
+  removeWorkspaceLogo,
   deleteWorkspace,
   getWorkspaceMembers,
   updateMemberRole,
@@ -27,6 +31,8 @@ router.post('/invite/accept', acceptInvitation);
 
 router.get('/:workspaceId', requireWorkspaceMember, getWorkspace);
 router.patch('/:workspaceId', requireWorkspaceRole('admin'), updateWorkspace);
+router.patch('/:workspaceId/logo', requireWorkspaceRole('admin'), upload.single('logo'), uploadWorkspaceLogo);
+router.delete('/:workspaceId/logo', requireWorkspaceRole('admin'), removeWorkspaceLogo);
 router.delete('/:workspaceId', requireWorkspaceRole('admin'), deleteWorkspace);
 
 router.get('/:workspaceId/members', requireWorkspaceMember, getWorkspaceMembers);

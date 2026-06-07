@@ -75,6 +75,7 @@ const WorkspaceSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
+    // Cloudinary secure URL for the workspace logo
     logo: {
       type: String,
       default: '',
