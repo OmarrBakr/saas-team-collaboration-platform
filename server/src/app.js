@@ -15,6 +15,7 @@ app.use(cookieParser());
 const authRouter = require('./routes/auth');
 const userRouter = require('./routes/user');
 const workspaceRouter = require('./routes/workspace');
+const boardRouter = require('./routes/board');
 
 // middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -25,6 +26,7 @@ const authenticationMiddleware = require('./middleware/authentication');
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', authenticationMiddleware, userRouter);
 app.use('/api/v1/workspaces', authenticationMiddleware, workspaceRouter);
+app.use('/api/v1/workspaces/:workspaceId/boards', authenticationMiddleware, boardRouter);
 
 //error handler
 app.use(notFoundMiddleware);
