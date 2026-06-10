@@ -1,6 +1,9 @@
 const { StatusCodes } = require('http-status-codes');
+const mongoose = require('mongoose');
 
 const Board = require('../models/Board');
+const User = require('../models/User');
+const Workspace = require('../models/Workspace');
 const { BadRequestError, NotFoundError } = require('../errors');
 const {
   uploadCardAttachment: cloudinaryUploadCardAttachment,
@@ -45,6 +48,43 @@ const findCardInBoard = (board, cardId) => {
   }
 
   throw new NotFoundError('Card not found');
+};
+
+const validateAssignees = async (assignees, workspaceId) => {
+  if (assignees === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(assignees)) {
+    throw new BadRequestError('Assignees must be an array of user ids');
+  }
+
+  for (const assigneeId of assignees) {
+    if (!mongoose.Types.ObjectId.isValid(assigneeId)) {
+      throw new BadRequestError(`Invalid assignee id: ${assigneeId}`);
+    }
+  }
+
+  const users = await User.find({ _id: { $in: assignees } }).select('_id');
+
+  if (users.length !== assignees.length) {
+    throw new BadRequestError('One or more assignees do not belong to a valid user account');
+  }
+
+  const workspace = await Workspace.findById(workspaceId).select('members.user');
+
+  if (!workspace) {
+    throw new NotFoundError('Workspace not found');
+  }
+
+  const memberIds = new Set(workspace.members.map((member) => member.user.toString()));
+  const nonMembers = assignees.filter((assigneeId) => !memberIds.has(assigneeId.toString()));
+
+  if (nonMembers.length > 0) {
+    throw new BadRequestError('One or more assignees are not members of this workspace');
+  }
+
+  return assignees;
 };
 
 const getWorkspaceBoards = async (req, res) => {
@@ -135,13 +175,7 @@ const addColumn = async (req, res) => {
 
 const addCard = async (req, res) => {
   const { columnId } = req.params;
-  const {
-    title,
-    description = '',
-    assignees = [],
-    dueDate = null,
-    priority = 'medium',
-  } = req.body;
+  const { title, description = '', dueDate = null, priority = 'medium' } = req.body;
 
   if (!title) {
     throw new BadRequestError('Card title is required');
@@ -157,7 +191,6 @@ const addCard = async (req, res) => {
   column.cards.push({
     title,
     description,
-    assignees,
     dueDate,
     priority,
     position: column.cards.length,
@@ -286,9 +319,12 @@ const updateCard = async (req, res) => {
 
   if (title !== undefined) card.title = title;
   if (description !== undefined) card.description = description;
-  if (assignees !== undefined) card.assignees = assignees;
   if (dueDate !== undefined) card.dueDate = dueDate;
   if (priority !== undefined) card.priority = priority;
+
+  if (assignees !== undefined) {
+    card.assignees = await validateAssignees(assignees, req.workspace._id);
+  }
 
   if (targetColumnId !== undefined && targetColumnId !== sourceColumn._id.toString()) {
     const targetColumn = board.columns.id(targetColumnId);
