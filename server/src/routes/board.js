@@ -1,5 +1,7 @@
 const express = require('express');
 
+const { attachmentUpload } = require('../middleware/upload');
+
 const {
   requireWorkspaceMember,
   requireWorkspaceRole,
@@ -18,6 +20,8 @@ const {
   moveColumn,
   updateCard,
   deleteCard,
+  uploadCardAttachment,
+  deleteCardAttachment,
   moveCard,
 } = require('../controllers/board');
 
@@ -37,6 +41,17 @@ router.patch('/:boardId/columns/:columnId/move', requireWorkspaceRole('admin'), 
 router.post('/:boardId/columns/:columnId/cards', requireWorkspaceRole('admin'), addCard);
 router.patch('/:boardId/cards/:cardId', requireWorkspaceRole('admin'), updateCard);
 router.delete('/:boardId/cards/:cardId', requireWorkspaceRole('admin'), deleteCard);
+router.post(
+  '/:boardId/cards/:cardId/attachments',
+  requireWorkspaceRole('admin'),
+  attachmentUpload.single('attachment'),
+  uploadCardAttachment
+);
+router.delete(
+  '/:boardId/cards/:cardId/attachments/:attachmentId',
+  requireWorkspaceRole('admin'),
+  deleteCardAttachment
+);
 router.patch(
   '/:boardId/cards/:cardId/move/:fromColumnId/:toColumnId',
   requireWorkspaceRole('admin'),

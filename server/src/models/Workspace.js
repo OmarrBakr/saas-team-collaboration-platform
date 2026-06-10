@@ -69,13 +69,11 @@ const WorkspaceSchema = new mongoose.Schema(
       maxlength: [200, 'Description must be at most 200 characters'],
       default: '',
     },
-    // URL-friendly identifier auto-generated from name
     slug: {
       type: String,
       unique: true,
       lowercase: true,
     },
-    // Cloudinary secure URL for the workspace logo
     logo: {
       type: String,
       default: '',
@@ -88,7 +86,6 @@ const WorkspaceSchema = new mongoose.Schema(
       type: [InvitationSchema],
       default: [],
     },
-    // Auto-created personal workspace on registration
     isPersonal: {
       type: Boolean,
       default: false,
@@ -111,7 +108,6 @@ WorkspaceSchema.pre('save', async function (next) {
       .trim()
       .replace(/\s+/g, '-');
 
-    // Append a short random suffix to ensure uniqueness
     const suffix = Math.random().toString(36).slice(2, 7);
     this.slug = `${base}-${suffix}`;
   }

@@ -2,6 +2,10 @@ const { StatusCodes } = require('http-status-codes');
 
 const Board = require('../models/Board');
 const { BadRequestError, NotFoundError } = require('../errors');
+const {
+  uploadCardAttachment: cloudinaryUploadCardAttachment,
+  deleteCardAttachment: cloudinaryDeleteCardAttachment,
+} = require('../utils/cloudinary');
 
 const getBoardByWorkspace = async (boardId, workspaceId) => {
   const board = await Board.findOne({
@@ -30,6 +34,17 @@ const getColumnAndCard = (board, columnId, cardId) => {
   }
 
   return { column, card };
+};
+
+const findCardInBoard = (board, cardId) => {
+  for (const column of board.columns) {
+    const card = column.cards.id(cardId);
+    if (card) {
+      return { column, card };
+    }
+  }
+
+  throw new NotFoundError('Card not found');
 };
 
 const getWorkspaceBoards = async (req, res) => {
@@ -307,6 +322,57 @@ const deleteCard = async (req, res) => {
   throw new NotFoundError('Card not found');
 };
 
+const uploadCardAttachment = async (req, res) => {
+  if (!req.file) {
+    throw new BadRequestError('Please provide a file to upload');
+  }
+
+  const board = await getBoardByWorkspace(req.params.boardId, req.workspace._id);
+  const { card } = findCardInBoard(board, req.params.cardId);
+
+  const result = await cloudinaryUploadCardAttachment(
+    req.file.buffer,
+    board._id,
+    card._id,
+    req.file.originalname
+  );
+
+  card.attachments.push({
+    title: req.file.originalname,
+    url: result.secure_url,
+    publicId: result.public_id,
+    mimeType: req.file.mimetype,
+    resourceType: result.resource_type || 'image',
+    size: req.file.size,
+    uploadedAt: new Date(),
+  });
+
+  await board.save();
+
+  res.status(StatusCodes.OK).json({ board });
+};
+
+const deleteCardAttachment = async (req, res) => {
+  const { attachmentId } = req.params;
+  const board = await getBoardByWorkspace(req.params.boardId, req.workspace._id);
+  const { card } = findCardInBoard(board, req.params.cardId);
+
+  const attachment = card.attachments.id(attachmentId);
+
+  if (!attachment) {
+    throw new NotFoundError('Attachment not found');
+  }
+
+  await cloudinaryDeleteCardAttachment(
+    attachment.publicId,
+    attachment.resourceType || 'image'
+  );
+  card.attachments.pull(attachmentId);
+  await board.save();
+
+  res.status(StatusCodes.OK).json({ board });
+};
+
 const moveCard = async (req, res) => {
   const { fromColumnId, toColumnId, cardId } = req.params;
   const { position } = req.body;
@@ -369,5 +435,7 @@ module.exports = {
   moveColumn,
   updateCard,
   deleteCard,
+  uploadCardAttachment,
+  deleteCardAttachment,
   moveCard,
 };

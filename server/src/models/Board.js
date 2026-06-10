@@ -32,6 +32,42 @@ const CardSchema = new mongoose.Schema(
       enum: ['low', 'medium', 'high'],
       default: 'medium',
     },
+    attachments: {
+      type: [
+        {
+          title: {
+            type: String,
+            required: true,
+            trim: true,
+          },
+          url: {
+            type: String,
+            required: true,
+          },
+          publicId: {
+            type: String,
+            required: true,
+          },
+          mimeType: {
+            type: String,
+            default: '',
+          },
+          resourceType: {
+            type: String,
+            default: 'image',
+          },
+          size: {
+            type: Number,
+            default: 0,
+          },
+          uploadedAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
     position: {
       type: Number,
       required: true,

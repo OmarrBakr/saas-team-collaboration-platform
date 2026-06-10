@@ -25,7 +25,7 @@ const errorHandlerMiddleware = (err, req, res, next) => {
   if (err.name === 'MulterError') {
     const message =
       err.code === 'LIMIT_FILE_SIZE'
-        ? 'Image must be at most 2MB'
+        ? 'File is too large'
         : err.message;
     return res.status(StatusCodes.BAD_REQUEST).json({ msg: message });
   }

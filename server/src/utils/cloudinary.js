@@ -38,9 +38,39 @@ const uploadWorkspaceLogo = (buffer, workspaceId) =>
     stream.end(buffer);
   });
 
+const uploadCardAttachment = (buffer, boardId, cardId, filename) =>
+  new Promise((resolve, reject) => {
+    assertCloudinaryConfigured();
+
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: `Flowvia-Cards-Attachments/${boardId}/${cardId}`,
+        public_id: `${Date.now()}-${filename.replace(/[^a-zA-Z0-9._-]/g, '-')}`,
+        overwrite: false,
+        resource_type: 'auto',
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    stream.end(buffer);
+  });
+
 const deleteWorkspaceLogo = (workspaceId) => {
   assertCloudinaryConfigured();
   return cloudinary.uploader.destroy(getLogoPublicId(workspaceId));
 };
 
-module.exports = { uploadWorkspaceLogo, deleteWorkspaceLogo };
+const deleteCardAttachment = (publicId, resourceType = 'auto') => {
+  assertCloudinaryConfigured();
+  return cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+};
+
+module.exports = {
+  uploadWorkspaceLogo,
+  deleteWorkspaceLogo,
+  uploadCardAttachment,
+  deleteCardAttachment,
+};
