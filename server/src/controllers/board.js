@@ -87,6 +87,33 @@ const validateAssignees = async (assignees, workspaceId) => {
   return assignees;
 };
 
+const validateLabels = (labels) => {
+  if (labels === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(labels)) {
+    throw new BadRequestError('Labels must be an array');
+  }
+
+  return labels.map((label, index) => {
+    if (!label || typeof label !== 'object') {
+      throw new BadRequestError(`Label at position ${index} must be an object`);
+    }
+
+    const { name, color } = label;
+
+    if (!name || !color) {
+      throw new BadRequestError('Each label must have a name and a color');
+    }
+
+    return {
+      name: String(name).trim(),
+      color: String(color).trim(),
+    };
+  });
+};
+
 const getWorkspaceBoards = async (req, res) => {
   const boards = await Board.find({ workspace: req.workspace._id }).sort({
     updatedAt: -1,
@@ -282,6 +309,7 @@ const updateCard = async (req, res) => {
     title,
     description,
     assignees,
+    labels,
     dueDate,
     priority,
     columnId: targetColumnId,
@@ -292,6 +320,7 @@ const updateCard = async (req, res) => {
     title === undefined &&
     description === undefined &&
     assignees === undefined &&
+    labels === undefined &&
     dueDate === undefined &&
     priority === undefined &&
     targetColumnId === undefined &&
@@ -324,6 +353,10 @@ const updateCard = async (req, res) => {
 
   if (assignees !== undefined) {
     card.assignees = await validateAssignees(assignees, req.workspace._id);
+  }
+
+  if (labels !== undefined) {
+    card.labels = validateLabels(labels);
   }
 
   if (targetColumnId !== undefined && targetColumnId !== sourceColumn._id.toString()) {

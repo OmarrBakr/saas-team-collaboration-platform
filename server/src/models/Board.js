@@ -32,6 +32,25 @@ const CardSchema = new mongoose.Schema(
       enum: ['low', 'medium', 'high'],
       default: 'medium',
     },
+    labels: {
+      type: [
+        {
+          name: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: [30, 'Label name must be at most 30 characters'],
+          },
+          color: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: [20, 'Label color must be at most 20 characters'],
+          },
+        },
+      ],
+      default: [],
+    },
     attachments: {
       type: [
         {
