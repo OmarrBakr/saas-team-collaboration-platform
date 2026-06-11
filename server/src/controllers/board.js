@@ -312,8 +312,6 @@ const updateCard = async (req, res) => {
     labels,
     dueDate,
     priority,
-    columnId: targetColumnId,
-    position,
   } = req.body;
 
   if (
@@ -322,9 +320,7 @@ const updateCard = async (req, res) => {
     assignees === undefined &&
     labels === undefined &&
     dueDate === undefined &&
-    priority === undefined &&
-    targetColumnId === undefined &&
-    position === undefined
+    priority === undefined
   ) {
     throw new BadRequestError('Please provide at least one field to update');
   }
@@ -357,19 +353,6 @@ const updateCard = async (req, res) => {
 
   if (labels !== undefined) {
     card.labels = validateLabels(labels);
-  }
-
-  if (targetColumnId !== undefined && targetColumnId !== sourceColumn._id.toString()) {
-    const targetColumn = board.columns.id(targetColumnId);
-
-    if (!targetColumn) {
-      throw new NotFoundError('Column not found');
-    }
-
-    const cardData = card.toObject();
-    sourceColumn.cards.pull(req.params.cardId);
-    cardData.position = typeof position === 'number' ? position : targetColumn.cards.length;
-    targetColumn.cards.push(cardData);
   }
 
   await board.save();
