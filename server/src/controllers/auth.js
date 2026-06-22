@@ -161,10 +161,10 @@ const forgetPassword = async (req, res) => {
   }
   const user = await User.findOne({ email });
   if (!user) {
-    throw new NotFoundError(`No user with email ${email}`);
+    throw new NotFoundError(`Email does not exist`);
   }
   const passwordToken = crypto.randomBytes(70).toString('hex');
-  const origin = 'http://localhost:3000';
+  const origin = process.env.CLIENT_ORIGIN;
   await sendResetPasswordEmail({
     name: user.firstName,
     email: user.email,
@@ -200,7 +200,7 @@ const resetPassword = async (req, res) => {
     user.passwordTokenExpirationDate = null;
     await user.save();
   } else {
-    res.status(StatusCodes.GONE).json({ msg: 'Token expired/incorrect' })
+    res.status(StatusCodes.GONE).json({ msg: 'Link expired/incorrect' })
   }
   res.status(StatusCodes.OK).json({ msg: 'Password reset' })
 }

@@ -28,3 +28,15 @@ export const register = (payload) =>
     method: 'POST',
     body: JSON.stringify(payload),
   });
+
+export const forgetPassword = (payload) =>
+  request('/api/v1/auth/forgetPassword', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const resetPassword = (payload) =>
+  request('/api/v1/auth/resetPassword', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });

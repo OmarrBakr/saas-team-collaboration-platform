@@ -1,5 +1,5 @@
-import AuthPage from '../pages/AuthPage';
+import Router from './Router';
 
 export default function App() {
-  return <AuthPage />;
+  return <Router />;
 }

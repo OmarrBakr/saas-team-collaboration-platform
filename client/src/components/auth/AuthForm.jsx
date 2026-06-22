@@ -3,6 +3,7 @@ export default function AuthForm({
   form,
   onChange,
   onSubmit,
+  onForgotPassword,
   isSubmitting,
   error,
   message,
@@ -40,6 +41,7 @@ export default function AuthForm({
         <input
           name="email"
           type="email"
+          required
           value={form.email}
           onChange={onChange}
           placeholder="jane@company.com"
@@ -52,6 +54,7 @@ export default function AuthForm({
         <input
           name="password"
           type="password"
+          required
           value={form.password}
           onChange={onChange}
           placeholder="Enter your password"
@@ -63,8 +66,19 @@ export default function AuthForm({
       {message && <div className="status-message success">{message}</div>}
 
       <button type="submit" className="primary-btn" disabled={isSubmitting}>
-        {isSubmitting ? 'Working...' : submitLabel}
+        {isSubmitting ? 'Please wait...' : submitLabel}
       </button>
+
+      {!isRegister && (
+        <button
+          type="button"
+          className="text-btn"
+          onClick={onForgotPassword}
+          disabled={isSubmitting}
+        >
+          Forgot password?
+        </button>
+      )}
     </form>
   );
 }

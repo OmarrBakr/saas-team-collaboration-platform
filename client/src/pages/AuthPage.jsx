@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { login, register } from '../services/auth';
+import { forgetPassword, login, register } from '../services/auth';
 import AuthForm from '../components/auth/AuthForm';
 import AuthHero from '../components/auth/AuthHero';
 import AuthSuccess from '../components/auth/AuthSuccess';
@@ -13,6 +13,9 @@ const initialForm = {
   email: '',
   password: '',
 };
+
+const isValidEmail = (value) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState('login');
@@ -51,6 +54,14 @@ export default function AuthPage() {
     event.preventDefault();
     setError('');
     setMessage('');
+
+    const email = form.email.trim();
+
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -58,11 +69,11 @@ export default function AuthPage() {
         ? {
             firstName: form.firstName.trim(),
             lastName: form.lastName.trim(),
-            email: form.email.trim(),
+            email,
             password: form.password,
           }
         : {
-            email: form.email.trim(),
+            email,
             password: form.password,
           };
 
@@ -75,6 +86,36 @@ export default function AuthPage() {
           : 'Signed in successfully.'
       );
       setForm(initialForm);
+    } catch (err) {
+      setError(err.message || 'Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setError('');
+    setMessage('');
+
+    const email = form.email.trim();
+
+    if (!email) {
+      setError('Enter your email address first.');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await forgetPassword({ email });
+      setMessage(
+        'You will receive a password reset link shortly.'
+      );
     } catch (err) {
       setError(err.message || 'Something went wrong');
     } finally {
@@ -106,6 +147,7 @@ export default function AuthPage() {
           form={form}
           onChange={handleChange}
           onSubmit={handleSubmit}
+          onForgotPassword={handleForgotPassword}
           isSubmitting={isSubmitting}
           error={error}
           message={message}
@@ -115,8 +157,9 @@ export default function AuthPage() {
         <p className="auth-note">
           {isRegister
             ? 'Create your account to get started with your first workspace.'
-            : 'Use your workspace email to access your boards.'}
+            : 'Sign in with your workspace email.'}
         </p>
+
       </section>
     </main>
   );
