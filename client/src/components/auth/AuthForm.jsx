@@ -19,7 +19,7 @@ export default function AuthForm({
               name="firstName"
               value={form.firstName}
               onChange={onChange}
-              placeholder="Jane"
+              placeholder="John"
               autoComplete="given-name"
             />
           </label>
@@ -44,7 +44,7 @@ export default function AuthForm({
           required
           value={form.email}
           onChange={onChange}
-          placeholder="jane@company.com"
+          placeholder="john@company.com"
           autoComplete="email"
         />
       </label>
