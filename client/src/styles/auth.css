@@ -1,0 +1,247 @@
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 2rem;
+  padding: 2rem;
+  align-items: center;
+}
+
+.auth-visual,
+.auth-card {
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow);
+}
+
+.auth-visual {
+  border-radius: 28px;
+  padding: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-visual::after {
+  content: '';
+  position: absolute;
+  inset: auto -8rem -10rem auto;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(119, 166, 255, 0.28), transparent 70%);
+  pointer-events: none;
+}
+
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: rgba(119, 166, 255, 0.12);
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.auth-visual h1 {
+  margin: 1.5rem 0 1rem;
+  max-width: 11ch;
+  font-size: clamp(3rem, 6vw, 5.6rem);
+  line-height: 0.95;
+}
+
+.auth-visual p {
+  max-width: 34rem;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.feature-grid {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.feature-grid article {
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.feature-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+.feature-grid strong {
+  font-size: 0.98rem;
+}
+
+.auth-card {
+  border-radius: 28px;
+  padding: 2rem;
+}
+
+.tab-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  border: 0;
+  border-radius: 16px;
+  padding: 0.95rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tab.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  font-weight: 700;
+}
+
+.auth-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.auth-form span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.auth-form input {
+  border: 1px solid rgba(155, 175, 255, 0.16);
+  background: rgba(6, 10, 19, 0.72);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 0.95rem 1rem;
+  outline: none;
+}
+
+.auth-form input:focus {
+  border-color: rgba(119, 166, 255, 0.75);
+  box-shadow: 0 0 0 3px rgba(119, 166, 255, 0.15);
+}
+
+.two-up {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.primary-btn {
+  margin-top: 0.5rem;
+  border: 0;
+  border-radius: 16px;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.secondary-btn {
+  margin-top: 1rem;
+}
+
+.status-message {
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  line-height: 1.5;
+}
+
+.status-message.error {
+  background: rgba(255, 84, 84, 0.12);
+  border: 1px solid rgba(255, 84, 84, 0.28);
+  color: #ffbcbc;
+}
+
+.status-message.success {
+  background: rgba(91, 214, 143, 0.12);
+  border: 1px solid rgba(91, 214, 143, 0.28);
+  color: #c4f3d3;
+}
+
+.success-card {
+  display: grid;
+  gap: 1rem;
+  min-height: 100%;
+  align-content: center;
+}
+
+.success-card h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.success-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.success-pill {
+  justify-self: start;
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(91, 214, 143, 0.12);
+  color: #c4f3d3;
+  border: 1px solid rgba(91, 214, 143, 0.22);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.auth-note {
+  margin-top: 1rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-visual h1 {
+    max-width: 14ch;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-shell {
+    padding: 1rem;
+  }
+
+  .auth-visual,
+  .auth-card {
+    border-radius: 22px;
+    padding: 1.25rem;
+  }
+
+  .feature-grid,
+  .two-up {
+    grid-template-columns: 1fr;
+  }
+}
