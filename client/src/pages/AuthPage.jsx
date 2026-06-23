@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
-import { forgetPassword, login, register } from '../services/auth';
+import { forgetPassword, login, register, getCurrentUser } from '../services/auth';
 import AuthForm from '../components/auth/AuthForm';
 import AuthHero from '../components/auth/AuthHero';
 import AuthSuccess from '../components/auth/AuthSuccess';
@@ -24,6 +24,21 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const data = await getCurrentUser();
+        if (data && data.user) {
+          setUser(data.user);
+          setMessage('Signed in successfully.');
+        }
+      } catch (err) {
+        // Silently ignore authorization failure on mount
+      }
+    };
+    checkSession();
+  }, []);
 
   const isRegister = activeTab === 'register';
   const submitLabel = useMemo(
@@ -67,15 +82,15 @@ export default function AuthPage() {
     try {
       const payload = isRegister
         ? {
-            firstName: form.firstName.trim(),
-            lastName: form.lastName.trim(),
-            email,
-            password: form.password,
-          }
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email,
+          password: form.password,
+        }
         : {
-            email,
-            password: form.password,
-          };
+          email,
+          password: form.password,
+        };
 
       const result = isRegister ? await register(payload) : await login(payload);
 

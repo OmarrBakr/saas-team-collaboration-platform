@@ -40,3 +40,9 @@ export const resetPassword = (payload) =>
     method: 'POST',
     body: JSON.stringify(payload),
   });
+
+export const getCurrentUser = () =>
+  request('/api/v1/users/me', {
+    method: 'GET',
+  });
+
