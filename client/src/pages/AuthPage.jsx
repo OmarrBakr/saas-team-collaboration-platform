@@ -1,9 +1,11 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-import { forgetPassword, login, register, getCurrentUser } from '../services/auth';
+import { forgetPassword, login, register } from '../services/auth';
+import { useAuth } from '../context/AuthContext';
 import AuthForm from '../components/auth/AuthForm';
 import AuthHero from '../components/auth/AuthHero';
-import AuthSuccess from '../components/auth/AuthSuccess';
+import AuthSuccessPanel from '../components/auth/AuthSuccessPanel';
 import AuthTabs from '../components/auth/AuthTabs';
 import '../styles/auth.css';
 
@@ -14,31 +16,27 @@ const initialForm = {
   password: '',
 };
 
-const isValidEmail = (value) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
 export default function AuthPage() {
+  const { setUser } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // After login, redirect to the page the user originally tried to visit
+  // (stored by ProtectedRoute), or fall back to "/"
+  const intendedPath = location.state?.from?.pathname ?? '/';
+
   const [activeTab, setActiveTab] = useState('login');
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const data = await getCurrentUser();
-        if (data && data.user) {
-          setUser(data.user);
-          setMessage('Signed in successfully.');
-        }
-      } catch (err) {
-        // Silently ignore authorization failure on mount
-      }
-    };
-    checkSession();
-  }, []);
+  // When set, the card shows the email-verification confirmation view
+  const [registeredEmail, setRegisteredEmail] = useState(null);
+  // Holds the user object from the register response until they go to dashboard
+  const [registeredUser, setRegisteredUser] = useState(null);
 
   const isRegister = activeTab === 'register';
   const submitLabel = useMemo(
@@ -57,12 +55,9 @@ export default function AuthPage() {
     setMessage('');
   };
 
-  const resetAuth = () => {
-    setUser(null);
-    setMessage('');
-    setError('');
-    setForm(initialForm);
-    setActiveTab('login');
+  const handleGoToDashboard = () => {
+    setUser(registeredUser); // now push into context → ProtectedRoute lets them through
+    navigate('/', { replace: true });
   };
 
   const handleSubmit = async (event) => {
@@ -87,20 +82,21 @@ export default function AuthPage() {
           email,
           password: form.password,
         }
-        : {
-          email,
-          password: form.password,
-        };
+        : { email, password: form.password };
 
       const result = isRegister ? await register(payload) : await login(payload);
 
-      setUser(result.user);
-      setMessage(
-        isRegister
-          ? 'Account created successfully. Check your inbox to verify your email.'
-          : 'Signed in successfully.'
-      );
-      setForm(initialForm);
+      if (isRegister) {
+        // Don't call setUser yet — doing so would cause PublicRoute to
+        // redirect before the confirmation panel can render.
+        // Store the user locally; setUser is called in handleGoToDashboard.
+        setRegisteredUser(result.user);
+        setRegisteredEmail(email);
+        setForm(initialForm);
+      } else {
+        setUser(result.user);
+        navigate(intendedPath, { replace: true });
+      }
     } catch (err) {
       setError(err.message || 'Something went wrong');
     } finally {
@@ -128,19 +124,13 @@ export default function AuthPage() {
 
     try {
       await forgetPassword({ email });
-      setMessage(
-        'You will receive a password reset link shortly.'
-      );
+      setMessage('You will receive a password reset link shortly.');
     } catch (err) {
       setError(err.message || 'Something went wrong');
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  if (user) {
-    return <AuthSuccess user={user} message={message} onReset={resetAuth} />;
-  }
 
   return (
     <main className="auth-shell">
@@ -155,27 +145,45 @@ export default function AuthPage() {
       />
 
       <section className="auth-card">
-        <AuthTabs activeTab={activeTab} onChange={handleTabChange} />
+        {registeredEmail ? (
+          <AuthSuccessPanel
+            pill="Check your inbox"
+            title="You're all set!"
+            description={
+              <>
+                Your account has been created. We sent a verification link to{' '}
+                <strong>{registeredEmail}</strong> - open it whenever you're
+                ready to verify your address.
+              </>
+            }
+            actionLabel="Go to Dashboard"
+            onAction={handleGoToDashboard}
+          />
+        ) : (
+          <>
+            <AuthTabs activeTab={activeTab} onChange={handleTabChange} />
 
-        <AuthForm
-          isRegister={isRegister}
-          form={form}
-          onChange={handleChange}
-          onSubmit={handleSubmit}
-          onForgotPassword={handleForgotPassword}
-          isSubmitting={isSubmitting}
-          error={error}
-          message={message}
-          submitLabel={submitLabel}
-        />
+            <AuthForm
+              isRegister={isRegister}
+              form={form}
+              onChange={handleChange}
+              onSubmit={handleSubmit}
+              onForgotPassword={handleForgotPassword}
+              isSubmitting={isSubmitting}
+              error={error}
+              message={message}
+              submitLabel={submitLabel}
+            />
 
-        <p className="auth-note">
-          {isRegister
-            ? 'Create your account to get started with your first workspace.'
-            : 'Sign in with your workspace email.'}
-        </p>
-
+            <p className="auth-note">
+              {isRegister
+                ? 'Create your account to get started with your first workspace.'
+                : 'Sign in with your workspace email.'}
+            </p>
+          </>
+        )}
       </section>
     </main>
   );
 }
+
