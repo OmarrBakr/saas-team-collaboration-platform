@@ -24,7 +24,10 @@ export const request = async (path, options = {}) => {
   const isAuthEndpoint =
     path.includes('/auth/refresh') ||
     path.includes('/auth/login') ||
-    path.includes('/auth/register');
+    path.includes('/auth/register') ||
+    path.includes('/auth/verifyEmail') ||
+    path.includes('/auth/resetPassword') ||
+    path.includes('/auth/forgetPassword');
 
   if (res.status === 401 && !isAuthEndpoint) {
     if (!isRefreshing) {
@@ -75,6 +78,9 @@ export const forgetPassword = (payload) =>
 
 export const resetPassword = (payload) =>
   request('/api/v1/auth/resetPassword', { method: 'POST', body: JSON.stringify(payload) });
+
+export const verifyEmail = (payload) =>
+  request('/api/v1/auth/verifyEmail', { method: 'POST', body: JSON.stringify(payload) });
 
 export const getCurrentUser = () =>
   request('/api/v1/users/me', { method: 'GET' });

@@ -1,20 +1,34 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getCurrentUser } from '../../services/auth';
+import { useLocation } from 'react-router-dom';
+
+import { getCurrentUser } from '../services/auth';
 
 const AuthContext = createContext(null);
 
+const isPublicTokenPage = (pathname) =>
+  pathname === '/reset-password' ||
+  pathname === '/user/reset-password' ||
+  pathname === '/verify-email' ||
+  pathname === '/user/verify-email' ||
+  pathname === '/login';
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  // true while we are checking the session on mount — prevents a flash
-  // of the login page before we know the cookie is valid
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
+    if (isPublicTokenPage(location.pathname)) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     getCurrentUser()
       .then((data) => setUser(data.user ?? null))
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
-  }, []);
+  }, [location.pathname]);
 
   return (
     <AuthContext.Provider value={{ user, setUser, loading }}>

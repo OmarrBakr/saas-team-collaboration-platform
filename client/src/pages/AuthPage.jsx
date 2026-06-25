@@ -14,6 +14,7 @@ const initialForm = {
   lastName: '',
   email: '',
   password: '',
+  confirmPassword: '',
 };
 
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -35,8 +36,6 @@ export default function AuthPage() {
 
   // When set, the card shows the email-verification confirmation view
   const [registeredEmail, setRegisteredEmail] = useState(null);
-  // Holds the user object from the register response until they go to dashboard
-  const [registeredUser, setRegisteredUser] = useState(null);
 
   const isRegister = activeTab === 'register';
   const submitLabel = useMemo(
@@ -55,11 +54,6 @@ export default function AuthPage() {
     setMessage('');
   };
 
-  const handleGoToDashboard = () => {
-    setUser(registeredUser); // now push into context → ProtectedRoute lets them through
-    navigate('/', { replace: true });
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
@@ -72,11 +66,31 @@ export default function AuthPage() {
       return;
     }
 
+    if (isRegister) {
+      if (!form.firstName.trim() || !form.lastName.trim()) {
+        setError('Please enter your first and last name.');
+        return;
+      }
+
+      if (!form.password || !form.confirmPassword) {
+        setError('Please enter and confirm your password.');
+        return;
+      }
+
+      if (form.password !== form.confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+    } else if (!form.password) {
+      setError('Please enter your password.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const payload = isRegister
-        ? {
+          ? {
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
           email,
@@ -87,10 +101,6 @@ export default function AuthPage() {
       const result = isRegister ? await register(payload) : await login(payload);
 
       if (isRegister) {
-        // Don't call setUser yet — doing so would cause PublicRoute to
-        // redirect before the confirmation panel can render.
-        // Store the user locally; setUser is called in handleGoToDashboard.
-        setRegisteredUser(result.user);
         setRegisteredEmail(email);
         setForm(initialForm);
       } else {
@@ -157,7 +167,8 @@ export default function AuthPage() {
               </>
             }
             actionLabel="Go to Dashboard"
-            onAction={handleGoToDashboard}
+            actionType="link"
+            actionHref="/"
           />
         ) : (
           <>

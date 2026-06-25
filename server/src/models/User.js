@@ -46,7 +46,7 @@ const UserSchema = new mongoose.Schema(
       select: false,
       match: [
         /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$/,
-        'Password must contain at least one digit, one lowercase letter, and one uppercase letter.',
+        'Password must contain at least one number, one lowercase letter, and one uppercase letter.',
       ],
     },
     refreshToken: {

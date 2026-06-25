@@ -6,6 +6,7 @@ export default function AuthSuccessPanel({
   onAction,
   actionHref,
   actionType = 'button',
+  disabled = false,
 }) {
   return (
     <div className="success-card">
@@ -17,7 +18,12 @@ export default function AuthSuccessPanel({
           {actionLabel}
         </a>
       ) : (
-        <button type="button" className="primary-btn" onClick={onAction}>
+        <button
+          type="button"
+          className="primary-btn"
+          onClick={onAction}
+          disabled={disabled}
+        >
           {actionLabel}
         </button>
       )}

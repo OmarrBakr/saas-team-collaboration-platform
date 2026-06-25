@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthPage from '../pages/AuthPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
+import VerifyEmailPage from '../pages/VerifyEmailPage';
 
 // ─── Placeholder dashboard (replace when the real page exists) ─────────────────
 function Dashboard() {
@@ -74,6 +75,10 @@ export default function Router() {
       {/* Password reset — accessible to anyone with a valid token link */}
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/user/reset-password" element={<ResetPasswordPage />} />
+
+      {/* Email verification — accessible to anyone with a valid token link */}
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/user/verify-email" element={<VerifyEmailPage />} />
 
       {/* Fallback — redirect unknown paths to root */}
       <Route path="*" element={<Navigate to="/" replace />} />

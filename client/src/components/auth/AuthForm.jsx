@@ -10,7 +10,7 @@ export default function AuthForm({
   submitLabel,
 }) {
   return (
-    <form className="auth-form" onSubmit={onSubmit}>
+    <form className="auth-form" onSubmit={onSubmit} noValidate>
       <a href="/api/v1/auth/google" className="google-btn">
         <svg className="google-icon" viewBox="0 0 24 24" width="20" height="20">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.3-4.74 3.3-8.09z"/>
@@ -52,29 +52,41 @@ export default function AuthForm({
 
       <label>
         <span>Email</span>
-        <input
-          name="email"
-          type="email"
-          required
-          value={form.email}
-          onChange={onChange}
-          placeholder="john@company.com"
-          autoComplete="email"
-        />
+          <input
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={onChange}
+            placeholder="john@company.com"
+            autoComplete="email"
+          />
       </label>
 
       <label>
         <span>Password</span>
-        <input
-          name="password"
-          type="password"
-          required
-          value={form.password}
-          onChange={onChange}
-          placeholder="Enter your password"
-          autoComplete={isRegister ? 'new-password' : 'current-password'}
-        />
+          <input
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={onChange}
+            placeholder="Enter your password"
+            autoComplete={isRegister ? 'new-password' : 'current-password'}
+          />
       </label>
+
+      {isRegister && (
+        <label>
+          <span>Confirm password</span>
+          <input
+            name="confirmPassword"
+            type="password"
+            value={form.confirmPassword}
+            onChange={onChange}
+            placeholder="Confirm your password"
+            autoComplete="new-password"
+          />
+        </label>
+      )}
 
       {error && <div className="status-message error">{error}</div>}
       {message && <div className="status-message success">{message}</div>}
