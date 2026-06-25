@@ -9,8 +9,7 @@ const isPublicTokenPage = (pathname) =>
   pathname === '/reset-password' ||
   pathname === '/user/reset-password' ||
   pathname === '/verify-email' ||
-  pathname === '/user/verify-email' ||
-  pathname === '/login';
+  pathname === '/user/verify-email';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
