@@ -138,6 +138,35 @@ const refresh = async (req, res) => {
   res.status(StatusCodes.OK).json({ msg: 'Access token refreshed' });
 };
 
+const logout = async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (refreshToken) {
+    const user = await User.findOne({ refreshToken }).select('+refreshToken');
+
+    if (user) {
+      user.refreshToken = null;
+      await user.save();
+    }
+  }
+
+  res.cookie('accessToken', 'logout', {
+    httpOnly: true,
+    expires: new Date(Date.now() - 1000),
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
+
+  res.cookie('refreshToken', 'logout', {
+    httpOnly: true,
+    expires: new Date(Date.now() - 1000),
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
+
+  res.status(StatusCodes.OK).json({ msg: 'Logged out successfully' });
+};
+
 const verifyEmail = async (req, res) => {
   const { token: verificationToken, email } = req.body;
   const user = await User.findOne({ email });
@@ -313,6 +342,7 @@ module.exports = {
   register,
   login,
   refresh,
+  logout,
   verifyEmail,
   forgetPassword,
   resetPassword,

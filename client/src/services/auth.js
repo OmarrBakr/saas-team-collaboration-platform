@@ -24,6 +24,7 @@ export const request = async (path, options = {}) => {
   const isAuthEndpoint =
     path.includes('/auth/refresh') ||
     path.includes('/auth/login') ||
+    path.includes('/auth/logout') ||
     path.includes('/auth/register') ||
     path.includes('/auth/verifyEmail') ||
     path.includes('/auth/resetPassword') ||
@@ -69,6 +70,9 @@ export const request = async (path, options = {}) => {
 
 export const login = (payload) =>
   request('/api/v1/auth/login', { method: 'POST', body: JSON.stringify(payload) });
+
+export const logout = () =>
+  request('/api/v1/auth/logout', { method: 'POST' });
 
 export const register = (payload) =>
   request('/api/v1/auth/register', { method: 'POST', body: JSON.stringify(payload) });

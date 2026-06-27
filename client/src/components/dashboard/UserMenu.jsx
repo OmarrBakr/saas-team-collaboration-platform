@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { logout } from '../../services/auth';
 import { useAuth } from '../../context/AuthContext';
 
 function initialsFromUser(user) {
@@ -8,8 +11,25 @@ function initialsFromUser(user) {
 }
 
 export default function UserMenu() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+
+    try {
+      await logout();
+    } catch (err) {
+      // If the request fails, still clear the local session state.
+    } finally {
+      setUser(null);
+      setOpen(false);
+      setIsSigningOut(false);
+      navigate('/login', { replace: true });
+    }
+  };
 
   return (
     <div className="user-menu">
@@ -32,6 +52,14 @@ export default function UserMenu() {
             <strong>{user?.firstName} {user?.lastName}</strong>
             <span>{user?.email}</span>
           </div>
+          <button
+            type="button"
+            className="user-menu-item"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+          >
+            {isSigningOut ? 'Signing out...' : 'Sign out'}
+          </button>
         </div>
       )}
     </div>
