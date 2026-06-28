@@ -265,6 +265,116 @@
   transform: translateY(0);
 }
 
+.profile-card {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 48rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.profile-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.profile-divider {
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(155, 175, 255, 0.12);
+}
+
+.profile-shell {
+  min-height: 100vh;
+  padding: 1.5rem;
+  color: var(--text);
+  display: grid;
+  gap: 1.25rem;
+  align-content: center;
+  justify-items: center;
+  background:
+    radial-gradient(circle at top left, rgba(119, 166, 255, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(91, 214, 143, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(3, 6, 11, 0.98), rgba(5, 8, 14, 1));
+}
+
+.profile-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profile-header h1 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.profile-header--compact {
+  padding-bottom: 0.25rem;
+}
+
+.profile-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.profile-avatar {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+}
+
+.profile-backbar {
+  width: 100%;
+  max-width: 48rem;
+  display: flex;
+  justify-content: flex-start;
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(155, 175, 255, 0.16);
+  background: rgba(6, 10, 19, 0.72);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.back-link.profile-back-button {
+  margin-top: 0.5rem;
+  border: 0;
+  border-radius: 16px;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  flex: 0 0 auto;
+  text-decoration: none;
+  text-align: center;
+}
+
+.back-link:hover {
+  transform: translateY(-1px);
+}
+
+.back-link:active {
+  transform: translateY(0);
+}
+
+.profile-form {
+  max-width: 100%;
+}
+
+.profile-submit {
+  width: 100%;
+}
+
 .google-icon {
   flex-shrink: 0;
 }
@@ -296,8 +406,8 @@
 
 
 @media (max-width: 960px) {
-  .auth-shell {
-    grid-template-columns: 1fr;
+  .profile-shell {
+    padding: 1rem;
   }
 
   .auth-visual h1 {
@@ -306,8 +416,8 @@
 }
 
 @media (max-width: 640px) {
-  .auth-shell {
-    padding: 1rem;
+  .profile-back-button {
+    padding-inline: 0.9rem;
   }
 
   .auth-visual,
@@ -319,5 +429,14 @@
   .feature-grid,
   .two-up {
     grid-template-columns: 1fr;
+  }
+
+  .profile-title {
+    align-items: flex-start;
+  }
+
+  .profile-avatar {
+    width: 2.6rem;
+    height: 2.6rem;
   }
 }

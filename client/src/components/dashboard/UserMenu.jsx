@@ -39,7 +39,11 @@ export default function UserMenu() {
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
       >
-        <span className="user-avatar">{initialsFromUser(user)}</span>
+        <span className="workspace-card-logo user-avatar">
+          <span className="workspace-logo-fallback user-avatar-text">
+            {initialsFromUser(user)}
+          </span>
+        </span>
         <span className="user-meta">
           <strong>{user?.firstName} {user?.lastName}</strong>
           <small>{user?.email}</small>
@@ -52,6 +56,16 @@ export default function UserMenu() {
             <strong>{user?.firstName} {user?.lastName}</strong>
             <span>{user?.email}</span>
           </div>
+          <button
+            type="button"
+            className="user-menu-item"
+            onClick={() => {
+              setOpen(false);
+              navigate('/profile');
+            }}
+          >
+            Edit profile
+          </button>
           <button
             type="button"
             className="user-menu-item"

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import AuthPage from '../pages/AuthPage';
 import DashboardPage from '../pages/DashboardPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
+import ProfilePage from '../pages/ProfilePage';
 import VerifyEmailPage from '../pages/VerifyEmailPage';
 
 function ProtectedRoute({ children }) {
@@ -56,6 +57,14 @@ export default function Router() {
       <Route path="/user/reset-password" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/user/verify-email" element={<VerifyEmailPage />} />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -57,8 +57,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  font-weight: 800;
+  background: rgba(119, 166, 255, 0.12);
+  border: 1px solid rgba(119, 166, 255, 0.18);
+  flex-shrink: 0;
+}
+
+.user-avatar-text {
+  font-size: 0.9rem;
 }
 
 .user-meta {
@@ -93,7 +98,6 @@
   display: grid;
   gap: 0.15rem;
   padding: 0.25rem 0.25rem 0.75rem;
-  margin-bottom: 0.5rem;
   border-bottom: 1px solid rgba(155, 175, 255, 0.12);
 }
 
@@ -106,6 +110,7 @@
   color: var(--text);
   text-align: left;
   cursor: pointer;
+  margin-top: 0.6rem; 
 }
 
 .user-menu-item:disabled {
@@ -266,6 +271,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.workspace-card-logo.profile-avatar{
+  margin-top: 15px;
 }
 
 .workspace-title-group {

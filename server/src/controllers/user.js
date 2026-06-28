@@ -1,7 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 
 const User = require('../models/User');
-const { BadRequestError, NotFoundError, UnauthenticatedError } = require('../errors');
+const { BadRequestError, NotFoundError } = require('../errors');
 
 /**
  * GET /api/v1/users/me
@@ -82,7 +82,7 @@ const updatePassword = async (req, res) => {
   const isPasswordCorrect = await user.comparePassword(currentPassword);
 
   if (!isPasswordCorrect) {
-    throw new UnauthenticatedError('Current password is incorrect');
+    throw new BadRequestError('Current password is incorrect');
   }
 
   user.password = newPassword;
