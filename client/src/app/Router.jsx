@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthPage from '../pages/AuthPage';
 import DashboardPage from '../pages/DashboardPage';
+import AcceptInvitePage from '../pages/AcceptInvitePage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
 import ProfilePage from '../pages/ProfilePage';
 import WorkspacePage from '../pages/WorkspacePage';
@@ -58,6 +59,14 @@ export default function Router() {
       <Route path="/user/reset-password" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/user/verify-email" element={<VerifyEmailPage />} />
+      <Route
+        path="/workspaces/invite/accept"
+        element={
+          <ProtectedRoute>
+            <AcceptInvitePage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/profile"
         element={

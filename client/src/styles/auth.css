@@ -256,6 +256,12 @@
   font-weight: 700;
 }
 
+.success-pill--error {
+  background: rgba(255, 84, 84, 0.12);
+  color: #ffbcbc;
+  border-color: rgba(255, 84, 84, 0.28);
+}
+
 .auth-note {
   margin-top: 1rem;
   color: var(--muted);

@@ -301,6 +301,10 @@ const inviteMember = async (req, res) => {
 
   // Check if the email belongs to an existing member
   const existingUser = await User.findOne({ email });
+  if (!existingUser) {
+    throw new NotFoundError('No user found with that email address');
+  }
+
   if (existingUser && workspace.isMember(existingUser._id)) {
     throw new BadRequestError('This user is already a member of the workspace');
   }
@@ -330,9 +334,9 @@ const inviteMember = async (req, res) => {
   const inviterName = inviter ? `${inviter.firstName} ${inviter.lastName}` : 'A teammate';
 
   await sendInvitationEmail({
-    inviteeName: existingUser ? existingUser.firstName : null,
+    inviteeName: existingUser.firstName,
     inviterName,
-    email: email.toLowerCase(),
+    email: existingUser.email,
     workspaceName: workspace.name,
     inviteToken: rawToken,
     origin: process.env.CLIENT_ORIGIN,

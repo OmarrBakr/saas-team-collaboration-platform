@@ -135,7 +135,6 @@
 }
 
 .dashboard-alert {
-  margin-bottom: 1rem;
   border-radius: 14px;
   padding: 0.9rem 1rem;
   background: rgba(255, 84, 84, 0.12);
@@ -362,6 +361,31 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.member-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-left: auto;
+}
+
+.workspace-invite-btn {
+  border: 0;
+  border-radius: 14px;
+  padding: 0.8rem 1rem;
+  background: rgba(119, 166, 255, 0.12);
+  color: #dce7ff;
+  cursor: pointer;
+}
+
+.member-remove-btn {
+  border: 0;
+  border-radius: 14px;
+  padding: 0.7rem 0.85rem;
+  background: rgba(255, 84, 84, 0.12);
+  color: #ffbcbc;
+  cursor: pointer;
+}
+
 .board-item strong,
 .member-item strong {
   display: block;
@@ -512,6 +536,13 @@
   gap: 1rem;
 }
 
+.workspace-action-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
 .workspace-back-btn {
   border: 0;
   border-radius: 16px;
@@ -519,6 +550,13 @@
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.workspace-back-btn:hover,
+.workspace-back-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(119, 166, 255, 0.08);
 }
 
 .workspace-leave-btn {
@@ -528,6 +566,29 @@
   background: rgba(255, 84, 84, 0.12);
   color: #ffbcbc;
   cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.workspace-leave-btn:hover,
+.workspace-leave-btn:focus-visible {
+  background: rgba(255, 84, 84, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 84, 84, 0.12);
+}
+
+.workspace-delete-btn {
+  border: 0;
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 84, 84, 0.18);
+  color: #ffd3d3;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.workspace-delete-btn:hover,
+.workspace-delete-btn:focus-visible {
+  background: rgba(255, 84, 84, 0.26);
+  box-shadow: 0 0 0 3px rgba(255, 84, 84, 0.14);
 }
 
 .workspace-hero-main {
@@ -599,6 +660,21 @@
 
   .workspace-hero-main {
     align-items: flex-start;
+  }
+
+  .workspace-hero-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .workspace-action-group {
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+
+  .member-item-actions {
+    margin-left: 0;
+    flex-wrap: wrap;
   }
 }
 

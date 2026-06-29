@@ -24,7 +24,7 @@ const sendInvitationEmail = async ({
   const message = `
     <p>
       <strong>${inviterName}</strong> has invited you to join the workspace
-      <strong>"${workspaceName}"</strong> on CollabSpace.
+      <strong>"${workspaceName}"</strong> on Flowvia.
     </p>
     <p>Click the button below to accept the invitation. This link will expire in <strong>48 hours</strong>.</p>
     <p style="margin: 24px 0;">

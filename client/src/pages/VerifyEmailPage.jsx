@@ -72,6 +72,7 @@ export default function VerifyEmailPage() {
         ) : (
           <AuthSuccessPanel
             pill="Verification failed"
+            pillVariant ='error'
             title="We couldn't verify that link."
             description={error}
             actionLabel="Go to Dashboard"

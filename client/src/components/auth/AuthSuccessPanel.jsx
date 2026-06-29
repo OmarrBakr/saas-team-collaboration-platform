@@ -1,5 +1,6 @@
 export default function AuthSuccessPanel({
   pill,
+  pillVariant = 'success',
   title,
   description,
   actionLabel,
@@ -10,7 +11,7 @@ export default function AuthSuccessPanel({
 }) {
   return (
     <div className="success-card">
-      <div className="success-pill">{pill}</div>
+      <div className={`success-pill ${pillVariant === 'error' ? 'success-pill--error' : ''}`}>{pill}</div>
       <h2>{title}</h2>
       <p>{description}</p>
       {actionType === 'link' ? (

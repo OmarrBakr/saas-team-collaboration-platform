@@ -12,8 +12,30 @@ export const getWorkspaceBoards = (workspaceId) =>
 export const getWorkspaceMembers = (workspaceId) =>
   request(`/api/v1/workspaces/${workspaceId}/members`, { method: 'GET' });
 
+export const inviteWorkspaceMember = (workspaceId, payload) =>
+  request(`/api/v1/workspaces/${workspaceId}/invite`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const acceptWorkspaceInvitation = (payload) =>
+  request('/api/v1/workspaces/invite/accept', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
 export const leaveWorkspace = (workspaceId) =>
   request(`/api/v1/workspaces/${workspaceId}/leave`, {
+    method: 'DELETE',
+  });
+
+export const deleteWorkspace = (workspaceId) =>
+  request(`/api/v1/workspaces/${workspaceId}`, {
+    method: 'DELETE',
+  });
+
+export const removeWorkspaceMember = (workspaceId, userId) =>
+  request(`/api/v1/workspaces/${workspaceId}/members/${userId}`, {
     method: 'DELETE',
   });
 
