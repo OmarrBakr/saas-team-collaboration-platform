@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
-import { getWorkspace, getWorkspaceBoards, getWorkspaceMembers } from '../services/workspaces';
+import {
+  getWorkspace,
+  getWorkspaceBoards,
+  getWorkspaceMembers,
+  leaveWorkspace,
+} from '../services/workspaces';
 import '../styles/dashboard.css';
 
 const formatDate = (value) =>
@@ -33,6 +38,9 @@ export default function WorkspacePage() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isLeaveOpen, setIsLeaveOpen] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState('');
 
   useEffect(() => {
     const loadWorkspace = async () => {
@@ -76,6 +84,40 @@ export default function WorkspacePage() {
     [boards, members]
   );
 
+  const userId = user?._id || user?.id;
+  const userEmail = user?.email?.toLowerCase?.();
+  const currentMember = members.find((member) => {
+    const memberUserId = member.user?._id || member.user?.id || member.user;
+    const memberEmail = member.user?.email?.toLowerCase?.();
+    return (
+      memberUserId?.toString?.() === userId?.toString?.() ||
+      (userEmail && memberEmail === userEmail)
+    );
+  });
+  const adminCount = members.filter((member) => member.role === 'admin').length;
+  const isOnlyAdmin = currentMember?.role === 'admin' && adminCount === 1;
+
+  const handleLeave = async () => {
+    setIsLeaving(true);
+    setLeaveError('');
+
+    try {
+      const result = await leaveWorkspace(workspaceId);
+      setIsLeaveOpen(false);
+
+      if (result.deleted) {
+        navigate('/');
+        return;
+      }
+
+      navigate('/');
+    } catch (err) {
+      setLeaveError(err.message || 'Something went wrong');
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <main className="workspace-shell">
@@ -98,9 +140,17 @@ export default function WorkspacePage() {
   return (
     <main className="workspace-shell">
       <header className="workspace-hero">
-        <button type="button" className="workspace-back-btn" onClick={() => navigate(-1)}>
-          Back
-        </button>
+        <div className="workspace-hero-actions">
+          <button type="button" className="workspace-back-btn" onClick={() => navigate(-1)}>
+            Back
+          </button>
+
+          {user && (
+            <button type="button" className="workspace-leave-btn" onClick={() => setIsLeaveOpen(true)}>
+              Leave workspace
+            </button>
+          )}
+        </div>
 
         <div className="workspace-hero-main">
           <div className="workspace-hero-mark">
@@ -191,6 +241,54 @@ export default function WorkspacePage() {
           )}
         </article>
       </section>
+
+      {isLeaveOpen && (
+        <div className="modal-backdrop" role="presentation" onClick={() => !isLeaving && setIsLeaveOpen(false)}>
+          <div
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="leave-workspace-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal-head">
+              <div>
+                <p className="panel-label">Leave workspace</p>
+                <h2 id="leave-workspace-title">
+                  {isOnlyAdmin ? 'Leaving will delete this workspace' : 'Confirm leaving this workspace'}
+                </h2>
+              </div>
+            </div>
+
+            <p className="modal-note">
+              {isOnlyAdmin
+                ? 'You are the only admin here. If you leave, the workspace and its boards will be deleted.'
+                : 'You will lose access to this workspace if you continue.'}
+            </p>
+
+            {leaveError && <div className="dashboard-alert">{leaveError}</div>}
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => setIsLeaveOpen(false)}
+                disabled={isLeaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={handleLeave}
+                disabled={isLeaving}
+              >
+                {isLeaving ? 'Leaving...' : isOnlyAdmin ? 'Leave and delete' : 'Leave workspace'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

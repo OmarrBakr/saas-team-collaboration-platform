@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { StatusCodes } = require('http-status-codes');
 
 const Workspace = require('../models/Workspace');
+const Board = require('../models/Board');
 const User = require('../models/User');
 const {
   BadRequestError,
@@ -142,6 +143,7 @@ const deleteWorkspace = async (req, res) => {
     await cloudinaryDeleteLogo(workspace._id);
   }
 
+  await Board.deleteMany({ workspace: workspace._id });
   await workspace.deleteOne();
 
   res.status(StatusCodes.OK).json({ msg: 'Workspace deleted successfully' });
@@ -252,13 +254,29 @@ const leaveWorkspace = async (req, res) => {
     throw new NotFoundError('You are not a member of this workspace');
   }
 
-  workspace.members = workspace.members.filter(
-    (m) => m.user.toString() !== userId
-  );
+  const adminCount = workspace.members.filter((m) => m.role === 'admin').length;
+  const isOnlyAdmin = memberEntry.role === 'admin' && adminCount === 1;
+
+  workspace.members = workspace.members.filter((m) => m.user.toString() !== userId);
+
+  if (isOnlyAdmin) {
+    if (workspace.logo) {
+      await cloudinaryDeleteLogo(workspace._id);
+    }
+
+    await Board.deleteMany({ workspace: workspace._id });
+    await workspace.deleteOne();
+
+    res.status(StatusCodes.OK).json({
+      msg: 'You have left the workspace and it was deleted',
+      deleted: true,
+    });
+    return;
+  }
 
   await workspace.save();
 
-  res.status(StatusCodes.OK).json({ msg: 'You have left the workspace' });
+  res.status(StatusCodes.OK).json({ msg: 'You have left the workspace', deleted: false });
 };
 
 // ─── Invitations ──────────────────────────────────────────────────────────────

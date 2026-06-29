@@ -479,6 +479,11 @@
   display: flex;
   justify-content: end;
   gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.modal-actions .secondary-btn {
+  margin-top: 0;
 }
 
 .workspace-shell {
@@ -500,13 +505,28 @@
   gap: 1.25rem;
 }
 
+.workspace-hero-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
 .workspace-back-btn {
-  justify-self: start;
   border: 0;
   border-radius: 16px;
   padding: 0.9rem 1rem;
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
+  cursor: pointer;
+}
+
+.workspace-leave-btn {
+  border: 0;
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 84, 84, 0.12);
+  color: #ffbcbc;
   cursor: pointer;
 }
 

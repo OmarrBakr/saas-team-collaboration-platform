@@ -12,6 +12,11 @@ export const getWorkspaceBoards = (workspaceId) =>
 export const getWorkspaceMembers = (workspaceId) =>
   request(`/api/v1/workspaces/${workspaceId}/members`, { method: 'GET' });
 
+export const leaveWorkspace = (workspaceId) =>
+  request(`/api/v1/workspaces/${workspaceId}/leave`, {
+    method: 'DELETE',
+  });
+
 export const createWorkspace = (payload) =>
   request('/api/v1/workspaces', {
     method: 'POST',
