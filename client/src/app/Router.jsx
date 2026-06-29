@@ -5,6 +5,7 @@ import AuthPage from '../pages/AuthPage';
 import DashboardPage from '../pages/DashboardPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
 import ProfilePage from '../pages/ProfilePage';
+import WorkspacePage from '../pages/WorkspacePage';
 import VerifyEmailPage from '../pages/VerifyEmailPage';
 
 function ProtectedRoute({ children }) {
@@ -62,6 +63,15 @@ export default function Router() {
         element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/workspaces/:workspaceId"
+        element={
+          <ProtectedRoute>
+            <WorkspacePage />
           </ProtectedRoute>
         }
       />

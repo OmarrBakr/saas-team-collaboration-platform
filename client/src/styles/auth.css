@@ -157,6 +157,13 @@
   cursor: pointer;
   text-decoration: none;
   text-align: center;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primary-btn:hover:not(:disabled),
+.primary-btn:focus-visible:not(:disabled) {
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+  box-shadow: 0 0 0 3px rgba(119, 166, 255, 0.14);
 }
 
 .primary-btn:disabled {
@@ -166,6 +173,7 @@
 
 .secondary-btn {
   margin-top: 1rem;
+  cursor: pointer;
 }
 
 .text-btn {
@@ -251,18 +259,13 @@
   cursor: pointer;
   text-decoration: none;
   text-align: center;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .google-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(119, 166, 255, 0.4);
   box-shadow: 0 0 0 3px rgba(119, 166, 255, 0.1);
-  transform: translateY(-1px);
-}
-
-.google-btn:active {
-  transform: translateY(0);
 }
 
 .profile-card {
@@ -357,14 +360,11 @@
   flex: 0 0 auto;
   text-decoration: none;
   text-align: center;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .back-link:hover {
-  transform: translateY(-1px);
-}
-
-.back-link:active {
-  transform: translateY(0);
+  box-shadow: 0 0 0 3px rgba(119, 166, 255, 0.14);
 }
 
 .profile-form {
@@ -429,10 +429,6 @@
   .feature-grid,
   .two-up {
     grid-template-columns: 1fr;
-  }
-
-  .profile-title {
-    align-items: flex-start;
   }
 
   .profile-avatar {

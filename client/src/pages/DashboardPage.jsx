@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import DashboardTopBar from '../components/dashboard/DashboardTopBar';
 import CreateWorkspaceModal from '../components/workspaces/CreateWorkspaceModal';
@@ -60,6 +61,7 @@ function getWorkspaceInitials(name) {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -203,7 +205,19 @@ export default function DashboardPage() {
           ) : (
             <div className="workspace-card-grid">
               {workspaces.map((workspace) => (
-                <article key={workspace._id} className="workspace-card">
+                <article
+                  key={workspace._id}
+                  className="workspace-card workspace-card-link"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(`/workspaces/${workspace._id}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      navigate(`/workspaces/${workspace._id}`);
+                    }
+                  }}
+                >
                   <div className="panel-head">
                     <div className="workspace-title-group">
                       <div className="workspace-card-logo">
@@ -242,8 +256,8 @@ export default function DashboardPage() {
                       <strong>{workspace.members?.length || 0}</strong>
                     </div>
                     <div>
-                      <span>Cards</span>
-                      <strong>{workspace.cardCount || 0}</strong>
+                      <span>Boards</span>
+                      <strong>{workspace.boardCount || 0}</strong>
                     </div>
                     <div>
                       <span>Updated</span>
