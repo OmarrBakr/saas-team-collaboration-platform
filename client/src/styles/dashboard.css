@@ -375,6 +375,36 @@
   background: rgba(119, 166, 255, 0.12);
   color: #dce7ff;
   cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.workspace-invite-btn:hover,
+.workspace-invite-btn:focus-visible {
+  background: rgba(119, 166, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(119, 166, 255, 0.08);
+}
+
+.workspace-member-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.workspace-manage-btn {
+  border: 0;
+  border-radius: 14px;
+  padding: 0.8rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.workspace-manage-btn:hover,
+.workspace-manage-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(119, 166, 255, 0.08);
 }
 
 .member-remove-btn {
@@ -384,6 +414,13 @@
   background: rgba(255, 84, 84, 0.12);
   color: #ffbcbc;
   cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.member-remove-btn:hover,
+.member-remove-btn:focus-visible {
+  background: rgba(255, 84, 84, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 84, 84, 0.12);
 }
 
 .board-item strong,
@@ -419,6 +456,10 @@
   background: rgba(8, 12, 21, 0.98);
   box-shadow: var(--shadow);
   padding: 1.25rem;
+}
+
+.modal-card--wide {
+  width: min(100%, 52rem);
 }
 
 .modal-head {
@@ -508,6 +549,60 @@
 
 .modal-actions .secondary-btn {
   margin-top: 0;
+}
+
+.manage-member-list {
+  display: grid;
+  gap: 0.75rem;
+  max-height: min(60vh, 36rem);
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.manage-member-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.manage-member-info {
+  min-width: 0;
+}
+
+.manage-member-info strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.manage-member-info span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.manage-member-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.manage-role-select {
+  border: 1px solid rgba(155, 175, 255, 0.16);
+  background: rgba(6, 10, 19, 0.72);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 0.72rem 0.9rem;
+}
+
+.manage-role-select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .workspace-shell {

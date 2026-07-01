@@ -161,7 +161,26 @@ const getWorkspaceMembers = async (req, res) => {
     'firstName lastName email'
   );
 
-  res.status(StatusCodes.OK).json({ members: workspace.members });
+  const now = new Date();
+  const invitations = (workspace.invitations || []).filter((invitation) => new Date(invitation.expiresAt) > now);
+  const invitedUsers = await User.find({
+    email: { $in: invitations.map((invitation) => invitation.email) },
+  }).select('firstName lastName email');
+
+  const invitationUsersByEmail = new Map(
+    invitedUsers.map((invitedUser) => [invitedUser.email.toLowerCase(), invitedUser])
+  );
+  const invitationList = invitations.map((invitation) => {
+    const invitedUser = invitationUsersByEmail.get(invitation.email.toLowerCase());
+
+    return {
+      email: invitation.email,
+      firstName: invitedUser?.firstName || '',
+      lastName: invitedUser?.lastName || '',
+    };
+  });
+
+  res.status(StatusCodes.OK).json({ members: workspace.members, invitations: invitationList });
 };
 
 /**
@@ -288,15 +307,11 @@ const leaveWorkspace = async (req, res) => {
  */
 const inviteMember = async (req, res) => {
   const { userId } = req.user;
-  const { email, role = 'member' } = req.body;
+  const { email } = req.body;
   const workspace = req.workspace;
 
   if (!email) {
     throw new BadRequestError('Please provide an email address');
-  }
-
-  if (!['admin', 'member'].includes(role)) {
-    throw new BadRequestError('Role must be one of: admin, member');
   }
 
   // Check if the email belongs to an existing member
@@ -321,7 +336,6 @@ const inviteMember = async (req, res) => {
 
   workspace.invitations.push({
     email: email.toLowerCase(),
-    role,
     token: hashedToken,
     expiresAt,
     invitedBy: userId,
@@ -399,7 +413,7 @@ const acceptInvitation = async (req, res) => {
   // Add user as a member
   workspace.members.push({
     user: userId,
-    role: invitation.role,
+    role: 'member',
     joinedAt: new Date(),
   });
 
@@ -413,7 +427,7 @@ const acceptInvitation = async (req, res) => {
   res.status(StatusCodes.OK).json({
     msg: `You have joined "${workspace.name}"`,
     workspaceId: workspace._id,
-    role: invitation.role,
+    role: 'member',
   });
 };
 

@@ -3,12 +3,7 @@
 // original request. If the refresh also fails we redirect to /login.
 
 let isRefreshing = false;
-let pendingCallbacks = [];
-
-const onRefreshComplete = () => {
-  pendingCallbacks.forEach((cb) => cb());
-  pendingCallbacks = [];
-};
+let refreshPromise = null;
 
 export const request = async (path, options = {}) => {
   const res = await fetch(path, {
@@ -31,30 +26,25 @@ export const request = async (path, options = {}) => {
     path.includes('/auth/forgetPassword');
 
   if (res.status === 401 && !isAuthEndpoint) {
-    if (!isRefreshing) {
+    if (!refreshPromise) {
       isRefreshing = true;
-      const refreshRes = await fetch('/api/v1/auth/refresh', {
+      refreshPromise = fetch('/api/v1/auth/refresh', {
         method: 'POST',
         credentials: 'include',
-      });
-
-      isRefreshing = false;
-
-      if (refreshRes.ok) {
-        // Token refreshed — replay all queued requests
-        onRefreshComplete();
-      } else {
-        // Refresh failed — clear queue and throw; ProtectedRoute will
-        // redirect to /login via <Navigate> without a page reload
-        pendingCallbacks = [];
-        throw new Error('Session expired. Please sign in again.');
-      }
+      })
+        .then((refreshRes) => {
+          if (!refreshRes.ok) {
+            throw new Error('Session expired. Please sign in again.');
+          }
+        })
+        .finally(() => {
+          isRefreshing = false;
+          refreshPromise = null;
+        });
     }
 
-    // Queue this request until the in-flight refresh resolves
-    return new Promise((resolve) => {
-      pendingCallbacks.push(() => resolve(request(path, options)));
-    });
+    await refreshPromise;
+    return request(path, options);
   }
 
   const data = await res.json().catch(() => ({}));

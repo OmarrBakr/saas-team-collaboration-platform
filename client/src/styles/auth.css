@@ -166,7 +166,7 @@
 }
 
 .primary-btn:disabled {
-  cursor: wait;
+  cursor: default;
   opacity: 0.7;
 }
 

@@ -39,6 +39,12 @@ export const removeWorkspaceMember = (workspaceId, userId) =>
     method: 'DELETE',
   });
 
+export const updateWorkspaceMemberRole = (workspaceId, userId, role) =>
+  request(`/api/v1/workspaces/${workspaceId}/members/${userId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+  });
+
 export const createWorkspace = (payload) =>
   request('/api/v1/workspaces', {
     method: 'POST',

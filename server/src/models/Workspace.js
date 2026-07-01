@@ -30,11 +30,6 @@ const InvitationSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    role: {
-      type: String,
-      enum: ['admin', 'member'],
-      default: 'member',
-    },
     token: {
       type: String,
       required: true,

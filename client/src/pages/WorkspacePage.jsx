@@ -10,6 +10,7 @@ import {
   leaveWorkspace,
   inviteWorkspaceMember,
   removeWorkspaceMember,
+  updateWorkspaceMemberRole,
 } from '../services/workspaces';
 import '../styles/dashboard.css';
 
@@ -39,6 +40,7 @@ export default function WorkspacePage() {
   const [workspace, setWorkspace] = useState(null);
   const [boards, setBoards] = useState([]);
   const [members, setMembers] = useState([]);
+  const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isLeaveOpen, setIsLeaveOpen] = useState(false);
@@ -47,10 +49,15 @@ export default function WorkspacePage() {
   const [leaveError, setLeaveError] = useState('');
   const [removingMemberId, setRemovingMemberId] = useState('');
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isManageOpen, setIsManageOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteError, setInviteError] = useState('');
   const [isInviting, setIsInviting] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState(null);
+  const [memberRoles, setMemberRoles] = useState({});
+  const [draftMemberRoles, setDraftMemberRoles] = useState({});
+  const [isSavingRoles, setIsSavingRoles] = useState(false);
+  const [manageError, setManageError] = useState('');
 
   useEffect(() => {
     const loadWorkspace = async () => {
@@ -67,6 +74,19 @@ export default function WorkspacePage() {
         setWorkspace(workspaceResult.workspace);
         setBoards(boardsResult.boards || []);
         setMembers(membersResult.members || []);
+        setInvitations(membersResult.invitations || []);
+        setMemberRoles(
+          Object.fromEntries((membersResult.members || []).map((member) => [
+            (member.user?._id || member.user?.id || member.user)?.toString?.(),
+            member.role,
+          ]))
+        );
+        setDraftMemberRoles(
+          Object.fromEntries((membersResult.members || []).map((member) => [
+            (member.user?._id || member.user?.id || member.user)?.toString?.(),
+            member.role,
+          ]))
+        );
       } catch (err) {
         setError(err.message || 'Something went wrong');
       } finally {
@@ -89,9 +109,9 @@ export default function WorkspacePage() {
           ),
         0
       ),
-      members: members.length,
+      members: members.length + invitations.length,
     }),
-    [boards, members]
+    [boards, invitations.length, members.length]
   );
 
   const userId = user?._id || user?.id;
@@ -104,6 +124,7 @@ export default function WorkspacePage() {
       (userEmail && memberEmail === userEmail)
     );
   });
+  const currentMemberId = currentMember?.user?._id || currentMember?.user?.id || currentMember?.user;
   const adminCount = members.filter((member) => member.role === 'admin').length;
   const isOnlyAdmin = currentMember?.role === 'admin' && adminCount === 1;
   const isAdmin = currentMember?.role === 'admin';
@@ -152,10 +173,85 @@ export default function WorkspacePage() {
       await removeWorkspaceMember(workspaceId, memberUserId);
       const membersResult = await getWorkspaceMembers(workspaceId);
       setMembers(membersResult.members || []);
+      setInvitations(membersResult.invitations || []);
     } catch (err) {
       setLeaveError(err.message || 'Something went wrong');
     } finally {
       setRemovingMemberId('');
+    }
+  };
+
+  const openManageModal = () => {
+    setManageError('');
+    setDraftMemberRoles(memberRoles);
+    setIsManageOpen(true);
+  };
+
+  const handleDraftRoleChange = (memberUserId, nextRole) => {
+    const memberKey = memberUserId?.toString?.() || memberUserId;
+    setDraftMemberRoles((current) => ({ ...current, [memberKey]: nextRole }));
+  };
+
+  const hasRoleChanges = members.some((member) => {
+    const memberKey = (member.user?._id || member.user?.id || member.user)?.toString?.();
+    return memberKey && draftMemberRoles[memberKey] && draftMemberRoles[memberKey] !== memberRoles[memberKey];
+  });
+
+  const handleSaveRoles = async () => {
+    const changedMembers = members.filter((member) => {
+      const memberKey = (member.user?._id || member.user?.id || member.user)?.toString?.();
+      return memberKey && draftMemberRoles[memberKey] && draftMemberRoles[memberKey] !== memberRoles[memberKey];
+    });
+
+    if (changedMembers.length === 0) {
+      return;
+    }
+
+    setIsSavingRoles(true);
+    setManageError('');
+
+    try {
+      await Promise.all(
+        changedMembers.map((member) => {
+          const memberKey = (member.user?._id || member.user?.id || member.user)?.toString?.();
+          return updateWorkspaceMemberRole(workspaceId, memberKey, draftMemberRoles[memberKey]);
+        })
+      );
+
+      const membersResult = await getWorkspaceMembers(workspaceId);
+      setMembers(membersResult.members || []);
+      setInvitations(membersResult.invitations || []);
+      setMemberRoles(
+        Object.fromEntries((membersResult.members || []).map((member) => [
+          (member.user?._id || member.user?.id || member.user)?.toString?.(),
+          member.role,
+        ]))
+      );
+      setDraftMemberRoles(
+        Object.fromEntries((membersResult.members || []).map((member) => [
+          (member.user?._id || member.user?.id || member.user)?.toString?.(),
+          member.role,
+        ]))
+      );
+    } catch (err) {
+      setManageError(err.message || 'Something went wrong');
+      const membersResult = await getWorkspaceMembers(workspaceId);
+      setMembers(membersResult.members || []);
+      setInvitations(membersResult.invitations || []);
+      setMemberRoles(
+        Object.fromEntries((membersResult.members || []).map((member) => [
+          (member.user?._id || member.user?.id || member.user)?.toString?.(),
+          member.role,
+        ]))
+      );
+      setDraftMemberRoles(
+        Object.fromEntries((membersResult.members || []).map((member) => [
+          (member.user?._id || member.user?.id || member.user)?.toString?.(),
+          member.role,
+        ]))
+      );
+    } finally {
+      setIsSavingRoles(false);
     }
   };
 
@@ -323,17 +419,26 @@ export default function WorkspacePage() {
               <h2>Workspace members</h2>
             </div>
             {isAdmin && (
+              <div className="workspace-member-actions">
               <button
-                type="button"
-                className="workspace-invite-btn"
-                onClick={() => setIsInviteOpen(true)}
-              >
-                Invite members
-              </button>
+                  type="button"
+                  className="workspace-manage-btn"
+                  onClick={openManageModal}
+                >
+                  Manage
+                </button>
+                <button
+                  type="button"
+                  className="workspace-invite-btn"
+                  onClick={() => setIsInviteOpen(true)}
+                >
+                  Invite members
+                </button>
+              </div>
             )}
           </div>
 
-          {members.length === 0 ? (
+          {members.length === 0 && invitations.length === 0 ? (
             <p className="empty-state">No members found.</p>
           ) : (
             <div className="member-list">
@@ -349,25 +454,21 @@ export default function WorkspacePage() {
                   </div>
                   <div className="member-item-actions">
                     <span className="role-pill">{member.role}</span>
-                    {isAdmin &&
-                      (member.user?._id || member.user?.id || member.user)?.toString?.() !==
-                        currentMember?.user?._id?.toString?.() &&
-                      (member.user?._id || member.user?.id || member.user) && (
-                        <button
-                          type="button"
-                          className="member-remove-btn"
-                          onClick={() => openRemoveMemberModal(member)}
-                          disabled={
-                            removingMemberId ===
-                            (member.user?._id || member.user?.id || member.user)?.toString?.()
-                          }
-                        >
-                          {removingMemberId ===
-                          (member.user?._id || member.user?.id || member.user)?.toString?.()
-                            ? 'Removing...'
-                            : 'Remove'}
-                        </button>
-                      )}
+                  </div>
+                </div>
+              ))}
+              {invitations.map((invitation) => (
+                <div key={`${invitation.email}-${invitation.expiresAt}`} className="member-item">
+                  <div>
+                    <strong>
+                      {invitation.firstName || invitation.lastName
+                        ? `${invitation.firstName || ''} ${invitation.lastName || ''}`.trim()
+                        : invitation.email}
+                    </strong>
+                    <span>{invitation.email}</span>
+                  </div>
+                  <div className="member-item-actions">
+                    <span className="role-pill">Pending</span>
                   </div>
                 </div>
               ))}
@@ -375,6 +476,102 @@ export default function WorkspacePage() {
           )}
         </article>
       </section>
+
+      {isManageOpen && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setIsManageOpen(false)}>
+          <div
+            className="modal-card modal-card--wide"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="manage-members-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal-head">
+              <div>
+                <p className="panel-label">Manage members</p>
+                <h2 id="manage-members-title">Change roles or remove members</h2>
+              </div>
+            </div>
+
+            <div className="manage-member-list">
+              {members.map((member) => {
+                const memberUserId = member.user?._id || member.user?.id || member.user;
+                const memberKey = memberUserId?.toString?.() || memberUserId;
+                const isSelf = memberKey === currentMemberId?.toString?.();
+
+                return (
+                  <div key={memberKey} className="manage-member-row">
+                    <div className="manage-member-info">
+                      <strong>
+                        {member.user?.firstName || member.user?.lastName
+                          ? `${member.user?.firstName || ''} ${member.user?.lastName || ''}`.trim()
+                          : 'Member'}
+                      </strong>
+                      <span>{member.user?.email || ''}</span>
+                    </div>
+
+                    <div className="manage-member-actions">
+                      <select
+                        className="manage-role-select"
+                        value={draftMemberRoles[memberKey] || member.role}
+                        onChange={(event) => handleDraftRoleChange(memberKey, event.target.value)}
+                        disabled={!isAdmin || isSelf || isSavingRoles}
+                      >
+                        <option value="member">Member</option>
+                        <option value="admin">Admin</option>
+                      </select>
+
+                      {!isSelf && (
+                        <button
+                          type="button"
+                          className="member-remove-btn"
+                          onClick={() => openRemoveMemberModal(member)}
+                          disabled={removingMemberId === memberKey || isSavingRoles}
+                        >
+                          {removingMemberId === memberKey ? 'Removing...' : 'Remove'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {invitations.map((invitation) => (
+                <div key={`${invitation.email}-${invitation.expiresAt}`} className="manage-member-row">
+                  <div className="manage-member-info">
+                    <strong>
+                      {invitation.firstName || invitation.lastName
+                        ? `${invitation.firstName || ''} ${invitation.lastName || ''}`.trim()
+                        : invitation.email}
+                    </strong>
+                    <span>{invitation.email}</span>
+                  </div>
+
+                  <div className="manage-member-actions">
+                    <span className="role-pill">Pending</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {manageError && <div className="dashboard-alert">{manageError}</div>}
+
+            <div className="modal-actions">
+              <button type="button" className="secondary-btn" onClick={() => setIsManageOpen(false)}>
+                Close
+              </button>
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={handleSaveRoles}
+                disabled={!hasRoleChanges || isSavingRoles}
+              >
+                {isSavingRoles ? 'Saving...' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {memberToRemove && (
         <div className="modal-backdrop" role="presentation" onClick={closeRemoveMemberModal}>
