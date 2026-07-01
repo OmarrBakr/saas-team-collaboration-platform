@@ -52,6 +52,7 @@ export default function WorkspacePage() {
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteError, setInviteError] = useState('');
+  const [inviteMessage, setInviteMessage] = useState('');
   const [isInviting, setIsInviting] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState(null);
   const [memberRoles, setMemberRoles] = useState({});
@@ -274,6 +275,7 @@ export default function WorkspacePage() {
   const handleInviteMember = async (event) => {
     event.preventDefault();
     setInviteError('');
+    setInviteMessage('');
 
     const trimmedEmail = inviteEmail.trim();
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
@@ -286,9 +288,12 @@ export default function WorkspacePage() {
     setIsInviting(true);
 
     try {
-      await inviteWorkspaceMember(workspaceId, { email: trimmedEmail });
+      const result = await inviteWorkspaceMember(workspaceId, { email: trimmedEmail });
+      const membersResult = await getWorkspaceMembers(workspaceId);
+      setMembers(membersResult.members || []);
+      setInvitations(membersResult.invitations || []);
+      setInviteMessage(result.msg || `Invitation sent to ${trimmedEmail}`);
       setInviteEmail('');
-      setIsInviteOpen(false);
     } catch (err) {
       setInviteError(err.message || 'Something went wrong');
     } finally {
@@ -319,7 +324,7 @@ export default function WorkspacePage() {
     <main className="workspace-shell">
       <header className="workspace-hero">
         <div className="workspace-hero-actions">
-          <button type="button" className="workspace-back-btn" onClick={() => navigate(-1)}>
+          <button type="button" className="workspace-back-btn" onClick={() => navigate('/')}>
             Back
           </button>
 
@@ -650,6 +655,7 @@ export default function WorkspacePage() {
               </label>
 
               {inviteError && <div className="dashboard-alert">{inviteError}</div>}
+              {inviteMessage && <div className="status-message success">{inviteMessage}</div>}
 
               <div className="modal-actions">
                 <button
@@ -657,7 +663,7 @@ export default function WorkspacePage() {
                   className="secondary-btn"
                   onClick={() => setIsInviteOpen(false)}
                   disabled={isInviting}
-                >
+              >
                   Cancel
                 </button>
                 <button type="submit" className="primary-btn" disabled={isInviting}>

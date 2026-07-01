@@ -309,13 +309,14 @@ const inviteMember = async (req, res) => {
   const { userId } = req.user;
   const { email } = req.body;
   const workspace = req.workspace;
+  const normalizedEmail = email?.toLowerCase?.().trim();
 
-  if (!email) {
+  if (!normalizedEmail) {
     throw new BadRequestError('Please provide an email address');
   }
 
   // Check if the email belongs to an existing member
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: normalizedEmail });
   if (!existingUser) {
     throw new NotFoundError('No user found with that email address');
   }
@@ -324,9 +325,18 @@ const inviteMember = async (req, res) => {
     throw new BadRequestError('This user is already a member of the workspace');
   }
 
-  // Remove any existing pending invitation for this email
-  workspace.invitations = workspace.invitations.filter(
-    (inv) => inv.email !== email.toLowerCase()
+  const now = new Date();
+  const activeInvitation = (workspace.invitations || []).find(
+    (inv) => inv.email === normalizedEmail && new Date(inv.expiresAt) > now
+  );
+
+  if (activeInvitation) {
+    throw new BadRequestError('An active invitation already exists for this email');
+  }
+
+  // Remove any expired invitation for this email before creating a new one
+  workspace.invitations = (workspace.invitations || []).filter(
+    (inv) => inv.email !== normalizedEmail || new Date(inv.expiresAt) > now
   );
 
   // Generate token
@@ -335,7 +345,7 @@ const inviteMember = async (req, res) => {
   const expiresAt = new Date(Date.now() + INVITATION_EXPIRY_MS);
 
   workspace.invitations.push({
-    email: email.toLowerCase(),
+    email: normalizedEmail,
     token: hashedToken,
     expiresAt,
     invitedBy: userId,
@@ -357,7 +367,7 @@ const inviteMember = async (req, res) => {
   });
 
   res.status(StatusCodes.OK).json({
-    msg: `Invitation sent to ${email}`,
+    msg: `Invitation sent to ${normalizedEmail}`,
     expiresAt,
   });
 };
