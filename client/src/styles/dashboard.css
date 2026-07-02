@@ -695,6 +695,38 @@
   box-shadow: 0 0 0 3px rgba(255, 84, 84, 0.14);
 }
 
+.workspace-edit-btn {
+  border: 0;
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  background: rgba(119, 166, 255, 0.12);
+  color: #dce7ff;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.workspace-edit-btn:hover,
+.workspace-edit-btn:focus-visible {
+  background: rgba(119, 166, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(119, 166, 255, 0.12);
+}
+
+.workspace-edit-logo-preview {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(155, 175, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.workspace-edit-logo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .workspace-hero-main {
   display: flex;
   gap: 1rem;

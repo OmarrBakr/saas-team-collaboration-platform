@@ -10,7 +10,9 @@ import {
   leaveWorkspace,
   inviteWorkspaceMember,
   removeWorkspaceMember,
+  updateWorkspace,
   updateWorkspaceMemberRole,
+  uploadWorkspaceLogo,
 } from '../services/workspaces';
 import '../styles/dashboard.css';
 
@@ -47,6 +49,20 @@ export default function WorkspacePage() {
   const [destructiveAction, setDestructiveAction] = useState('leave');
   const [isLeaving, setIsLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState('');
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isEditingWorkspace, setIsEditingWorkspace] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+  });
+  const [editLogoFile, setEditLogoFile] = useState(null);
+  const [editLogoPreview, setEditLogoPreview] = useState('');
+  const [editInitialForm, setEditInitialForm] = useState({
+    name: '',
+    description: '',
+    logo: '',
+  });
   const [removingMemberId, setRemovingMemberId] = useState('');
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isManageOpen, setIsManageOpen] = useState(false);
@@ -73,6 +89,17 @@ export default function WorkspacePage() {
         ]);
 
         setWorkspace(workspaceResult.workspace);
+        setEditForm({
+          name: workspaceResult.workspace?.name || '',
+          description: workspaceResult.workspace?.description || '',
+        });
+        setEditLogoPreview(workspaceResult.workspace?.logo || '');
+        setEditLogoFile(null);
+        setEditInitialForm({
+          name: workspaceResult.workspace?.name || '',
+          description: workspaceResult.workspace?.description || '',
+          logo: workspaceResult.workspace?.logo || '',
+        });
         setBoards(boardsResult.boards || []);
         setMembers(membersResult.members || []);
         setInvitations(membersResult.invitations || []);
@@ -165,6 +192,82 @@ export default function WorkspacePage() {
       setIsLeaving(false);
     }
   };
+
+  const openEditModal = () => {
+    setEditError('');
+    const name = workspace?.name || '';
+    const description = workspace?.description || '';
+    const logo = workspace?.logo || '';
+    setEditForm({
+      name,
+      description,
+    });
+    setEditLogoPreview(logo);
+    setEditLogoFile(null);
+    setEditInitialForm({ name, description, logo });
+    setIsEditOpen(true);
+  };
+
+  const handleEditLogoChange = (event) => {
+    const file = event.target.files?.[0];
+    setEditLogoFile(file || null);
+
+    if (!file) {
+      setEditLogoPreview(workspace?.logo || '');
+      return;
+    }
+
+    setEditLogoPreview(URL.createObjectURL(file));
+  };
+
+  const handleEditChange = (event) => {
+    const { name, value } = event.target;
+    setEditForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleEditSubmit = async (event) => {
+    event.preventDefault();
+    setEditError('');
+
+    const trimmedName = editForm.name.trim();
+    const trimmedDescription = editForm.description.trim();
+
+    if (!trimmedName) {
+      setEditError('Workspace name is required.');
+      return;
+    }
+
+    setIsEditingWorkspace(true);
+
+    try {
+      const result = await updateWorkspace(workspaceId, {
+        name: trimmedName,
+        description: trimmedDescription,
+      });
+
+      let updatedWorkspace = result.workspace;
+
+      if (editLogoFile) {
+        const logoResult = await uploadWorkspaceLogo(workspaceId, editLogoFile);
+        updatedWorkspace = logoResult.workspace;
+      }
+
+      setWorkspace(updatedWorkspace);
+      setEditLogoFile(null);
+      setEditLogoPreview(updatedWorkspace?.logo || '');
+      setIsEditOpen(false);
+    } catch (err) {
+      setEditError(err.message || 'Something went wrong');
+    } finally {
+      setIsEditingWorkspace(false);
+    }
+  };
+
+  const hasWorkspaceEditChanges =
+    editForm.name.trim() !== editInitialForm.name.trim() ||
+    editForm.description.trim() !== editInitialForm.description.trim() ||
+    Boolean(editLogoFile) ||
+    (editLogoPreview || '') !== (editInitialForm.logo || '');
 
   const handleRemoveMember = async (memberUserId) => {
     setRemovingMemberId(memberUserId?.toString?.() || memberUserId);
@@ -352,6 +455,12 @@ export default function WorkspacePage() {
                 }}
               >
                 Delete workspace
+              </button>
+            )}
+
+            {isAdmin && (
+              <button type="button" className="workspace-edit-btn" onClick={openEditModal}>
+                Edit workspace
               </button>
             )}
           </div>
@@ -668,6 +777,80 @@ export default function WorkspacePage() {
                 </button>
                 <button type="submit" className="primary-btn" disabled={isInviting}>
                   {isInviting ? 'Inviting...' : 'Send invite'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isEditOpen && (
+        <div className="modal-backdrop" role="presentation" onClick={() => !isEditingWorkspace && setIsEditOpen(false)}>
+          <div
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-workspace-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal-head">
+              <div>
+                <p className="panel-label">Edit workspace</p>
+                <h2 id="edit-workspace-title">Update workspace details</h2>
+              </div>
+            </div>
+
+            <form className="workspace-form" onSubmit={handleEditSubmit} noValidate>
+              <label>
+                <span>Name</span>
+                <input
+                  name="name"
+                  value={editForm.name}
+                  onChange={handleEditChange}
+                  placeholder="Workspace name"
+                  required
+                />
+              </label>
+
+              <label>
+                <span>Description</span>
+                <textarea
+                  name="description"
+                  value={editForm.description}
+                  onChange={handleEditChange}
+                  placeholder="Workspace description"
+                  rows="4"
+                />
+              </label>
+
+              <label>
+                <span>Logo</span>
+                <input type="file" accept="image/*" onChange={handleEditLogoChange} />
+              </label>
+
+              {editLogoPreview && (
+                <div className="workspace-edit-logo-preview">
+                  <img src={editLogoPreview} alt="" aria-hidden="true" />
+                </div>
+              )}
+
+              {editError && <div className="dashboard-alert">{editError}</div>}
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => setIsEditOpen(false)}
+                  disabled={isEditingWorkspace}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="primary-btn"
+                  disabled={isEditingWorkspace || !hasWorkspaceEditChanges}
+                >
+                  {isEditingWorkspace ? 'Saving...' : 'Save changes'}
                 </button>
               </div>
             </form>

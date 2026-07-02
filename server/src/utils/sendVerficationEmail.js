@@ -10,7 +10,7 @@ const sendVerificationEmail = async ({
 
   const message = `
     <p style="margin: 0 0 16px; color: #374151; line-height: 1.7;">
-      Use the button below to confirm your email address and finish setting up your account.
+      Click the button below to confirm your email address and finish setting up your account.
     </p>
     <p style="margin: 0 0 24px; color: #6b7280; font-size: 13px; line-height: 1.6;">
       If you didn’t create this account, you can ignore this email.
