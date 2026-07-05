@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import DashboardTopBar from '../components/dashboard/DashboardTopBar';
@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext';
 import {
   createWorkspace,
   getMyWorkspaces,
-  getWorkspaceBoards,
   uploadWorkspaceLogo,
 } from '../services/workspaces';
 import '../styles/dashboard.css';
@@ -18,34 +17,6 @@ const formatDate = (value) =>
     day: 'numeric',
     year: 'numeric',
   }).format(new Date(value));
-
-const getWorkspaceStats = async (workspaceId) => {
-  const { boards } = await getWorkspaceBoards(workspaceId);
-
-  const cardCount = (boards || []).reduce(
-    (count, board) =>
-      count +
-      (board.columns || []).reduce(
-        (columnCount, column) => columnCount + (column.cards?.length || 0),
-        0
-      ),
-    0
-  );
-
-  return {
-    boardCount: boards?.length || 0,
-    cardCount,
-  };
-};
-
-function Stat({ label, value }) {
-  return (
-    <article className="dash-stat">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </article>
-  );
-}
 
 function getWorkspaceInitials(name) {
   return (
@@ -81,14 +52,7 @@ export default function DashboardPage() {
 
       try {
         const { workspaces: workspaceList } = await getMyWorkspaces();
-        const enriched = await Promise.all(
-          workspaceList.map(async (workspace) => {
-            const stats = await getWorkspaceStats(workspace._id);
-            return { ...workspace, ...stats };
-          })
-        );
-
-        setWorkspaces(enriched);
+        setWorkspaces(workspaceList);
       } catch (err) {
         setError(err.message || 'Something went wrong');
       } finally {
@@ -132,34 +96,13 @@ export default function DashboardPage() {
       setCreateForm({ name: '', description: '', logoFile: null });
 
       const { workspaces: workspaceList } = await getMyWorkspaces();
-      const enriched = await Promise.all(
-        workspaceList.map(async (workspace) => {
-          const stats = await getWorkspaceStats(workspace._id);
-          return { ...workspace, ...stats };
-        })
-      );
-
-      setWorkspaces(enriched);
+      setWorkspaces(workspaceList);
     } catch (err) {
       setCreateError(err.message || 'Something went wrong');
     } finally {
       setIsCreating(false);
     }
   };
-
-  const totals = useMemo(
-    () =>
-      workspaces.reduce(
-        (acc, workspace) => {
-          acc.boards += workspace.boardCount || 0;
-          acc.cards += workspace.cardCount || 0;
-          acc.members += workspace.members?.length || 0;
-          return acc;
-        },
-        { boards: 0, cards: 0, members: 0 }
-      ),
-    [workspaces]
-  );
 
   return (
     <main className="dashboard-shell">
@@ -187,12 +130,6 @@ export default function DashboardPage() {
                 Create workspace
               </button>
             </div>
-          </div>
-
-          <div className="stats-row">
-            <Stat label="Workspaces" value={workspaces.length} />
-            <Stat label="Boards" value={totals.boards} />
-            <Stat label="Cards" value={totals.cards} />
           </div>
 
           {loading ? (
@@ -242,7 +179,7 @@ export default function DashboardPage() {
                         <h3>{workspace.name}</h3>
                       </div>
                     </div>
-                    <span className="workspace-badge">{workspace.boardCount} boards</span>
+                    <span className="workspace-badge">Workspace</span>
                   </div>
 
                   <p className="panel-copy">
@@ -254,10 +191,6 @@ export default function DashboardPage() {
                     <div>
                       <span>Members</span>
                       <strong>{workspace.members?.length || 0}</strong>
-                    </div>
-                    <div>
-                      <span>Boards</span>
-                      <strong>{workspace.boardCount || 0}</strong>
                     </div>
                     <div>
                       <span>Updated</span>

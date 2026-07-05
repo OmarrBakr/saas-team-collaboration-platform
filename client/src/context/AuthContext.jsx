@@ -15,9 +15,10 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const initialPathname = location.pathname;
 
   useEffect(() => {
-    if (isPublicTokenPage(location.pathname)) {
+    if (isPublicTokenPage(initialPathname)) {
       setLoading(false);
       return;
     }
@@ -27,7 +28,7 @@ export function AuthProvider({ children }) {
       .then((data) => setUser(data.user ?? null))
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
-  }, [location.pathname]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, setUser, loading }}>
