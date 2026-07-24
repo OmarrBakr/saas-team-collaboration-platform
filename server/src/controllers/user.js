@@ -16,6 +16,7 @@ const getCurrentUser = async (req, res) => {
 
   res.status(StatusCodes.OK).json({
     user: {
+      id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
@@ -49,6 +50,7 @@ const updateCurrentUser = async (req, res) => {
 
   res.status(StatusCodes.OK).json({
     user: {
+      id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,

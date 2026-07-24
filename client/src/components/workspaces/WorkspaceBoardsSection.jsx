@@ -1,4 +1,4 @@
-export default function WorkspaceBoardsSection({ boards }) {
+export default function WorkspaceBoardsSection({ boards, onBoardClick }) {
   return (
     <article className="dashboard-panel">
       <div className="panel-head">
@@ -13,7 +13,19 @@ export default function WorkspaceBoardsSection({ boards }) {
       ) : (
         <div className="workspace-list">
           {boards.map((board) => (
-            <article key={board._id} className="workspace-list-item">
+            <article
+              key={board._id}
+              className="workspace-list-item workspace-list-item--clickable"
+              role="button"
+              tabIndex={0}
+              onClick={() => onBoardClick?.(board)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onBoardClick?.(board);
+                }
+              }}
+            >
               <div>
                 <strong>{board.name}</strong>
                 <span>{board.columns?.length || 0} columns</span>

@@ -62,15 +62,25 @@ const getMyWorkspaces = async (req, res) => {
  * Get a single workspace. Membership is enforced by requireWorkspaceMember middleware.
  */
 const getWorkspace = async (req, res) => {
-  // req.workspace is populated by requireWorkspaceMember middleware
-  const workspace = req.workspace.toObject();
+  const workspace = await Workspace.findById(req.workspace._id)
+    .populate('members.user', 'firstName lastName email')
+    .populate('invitations.invitedBy', 'firstName lastName email');
 
-  // Strip raw invitation tokens from the response
-  if (workspace.invitations) {
-    workspace.invitations = workspace.invitations.map(({ token, ...rest }) => rest);
+  if (!workspace) {
+    throw new NotFoundError('Workspace not found');
   }
 
-  res.status(StatusCodes.OK).json({ workspace });
+  const workspaceData = workspace.toObject();
+  const now = new Date();
+
+  // Strip raw invitation tokens from the response
+  if (workspaceData.invitations) {
+    workspaceData.invitations = workspaceData.invitations
+      .filter((invitation) => new Date(invitation.expiresAt) > now)
+      .map(({ token, ...rest }) => rest);
+  }
+
+  res.status(StatusCodes.OK).json({ workspace: workspaceData });
 };
 
 /**

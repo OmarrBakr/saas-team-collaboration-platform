@@ -2,7 +2,6 @@
 // If a request returns 401 we attempt one token refresh, then replay the
 // original request. If the refresh also fails we redirect to /login.
 
-let isRefreshing = false;
 let refreshPromise = null;
 
 export const request = async (path, options = {}) => {
@@ -27,7 +26,6 @@ export const request = async (path, options = {}) => {
 
   if (res.status === 401 && !isAuthEndpoint) {
     if (!refreshPromise) {
-      isRefreshing = true;
       refreshPromise = fetch('/api/v1/auth/refresh', {
         method: 'POST',
         credentials: 'include',
@@ -38,7 +36,6 @@ export const request = async (path, options = {}) => {
           }
         })
         .finally(() => {
-          isRefreshing = false;
           refreshPromise = null;
         });
     }

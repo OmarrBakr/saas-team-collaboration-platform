@@ -6,7 +6,6 @@ import {
   deleteWorkspace,
   getWorkspace,
   getWorkspaceBoards,
-  getWorkspaceMembers,
   inviteWorkspaceMember,
   leaveWorkspace,
   removeWorkspaceMember,
@@ -56,14 +55,12 @@ export default function useWorkspacePage(workspaceId, options = {}) {
       setError('');
 
       try {
-        const requests = [getWorkspace(workspaceId), getWorkspaceMembers(workspaceId)];
+        const requests = [getWorkspace(workspaceId)];
         if (includeBoards) {
-          requests.splice(1, 0, getWorkspaceBoards(workspaceId));
+          requests.push(getWorkspaceBoards(workspaceId));
         }
 
-        const [workspaceResult, boardsResultOrMembersResult, maybeMembersResult] = await Promise.all(requests);
-        const boardsResult = includeBoards ? boardsResultOrMembersResult : null;
-        const membersResult = includeBoards ? maybeMembersResult : boardsResultOrMembersResult;
+        const [workspaceResult, boardsResult] = await Promise.all(requests);
 
         const nextWorkspace = workspaceResult.workspace;
         setWorkspace(nextWorkspace);
@@ -79,8 +76,8 @@ export default function useWorkspacePage(workspaceId, options = {}) {
           logo: nextWorkspace?.logo || '',
         });
 
-        const nextMembers = membersResult.members || [];
-        const nextInvitations = membersResult.invitations || [];
+        const nextMembers = nextWorkspace?.members || [];
+        const nextInvitations = nextWorkspace?.invitations || [];
         setBoards(includeBoards ? boardsResult?.boards || [] : []);
         setMembers(nextMembers);
         setInvitations(nextInvitations);
@@ -118,9 +115,11 @@ export default function useWorkspacePage(workspaceId, options = {}) {
   const isAdmin = currentMember?.role === 'admin';
 
   const refreshMembers = async () => {
-    const membersResult = await getWorkspaceMembers(workspaceId);
-    const nextMembers = membersResult.members || [];
-    const nextInvitations = membersResult.invitations || [];
+    const workspaceResult = await getWorkspace(workspaceId);
+    const nextWorkspace = workspaceResult.workspace;
+    const nextMembers = nextWorkspace?.members || [];
+    const nextInvitations = nextWorkspace?.invitations || [];
+    setWorkspace(nextWorkspace);
     setMembers(nextMembers);
     setInvitations(nextInvitations);
     const roles = Object.fromEntries(

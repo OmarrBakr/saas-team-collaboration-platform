@@ -6,6 +6,7 @@ import DashboardPage from '../pages/DashboardPage';
 import AcceptInvitePage from '../pages/AcceptInvitePage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
 import ProfilePage from '../pages/ProfilePage';
+import BoardPage from '../pages/BoardPage';
 import WorkspacePage from '../pages/WorkspacePage';
 import VerifyEmailPage from '../pages/VerifyEmailPage';
 
@@ -81,6 +82,14 @@ export default function Router() {
         element={
           <ProtectedRoute>
             <WorkspacePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/workspaces/:workspaceId/boards/:boardId"
+        element={
+          <ProtectedRoute>
+            <BoardPage />
           </ProtectedRoute>
         }
       />

@@ -10,6 +10,9 @@ import WorkspaceHeaderSection from '../components/workspaces/WorkspaceHeaderSect
 import WorkspaceBoardsSection from '../components/workspaces/WorkspaceBoardsSection';
 import WorkspaceMembersSection from '../components/workspaces/WorkspaceMembersSection';
 import '../styles/dashboard.css';
+import '../styles/workspace.css';
+import '../styles/board.css';
+import '../styles/modals.css';
 
 export default function WorkspacePage() {
   const navigate = useNavigate();
@@ -117,7 +120,10 @@ export default function WorkspacePage() {
       {error && <div className="dashboard-alert">{error}</div>}
 
       <section className="workspace-grid">
-        <WorkspaceBoardsSection boards={boards} />
+        <WorkspaceBoardsSection
+          boards={boards}
+          onBoardClick={(board) => navigate(`/workspaces/${workspaceId}/boards/${board._id}`)}
+        />
         <WorkspaceMembersSection
           members={members}
           invitations={invitations}
