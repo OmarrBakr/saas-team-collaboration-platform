@@ -1,14 +1,14 @@
 import { useNavigate, useParams } from 'react-router-dom';
 
 import useBoardPage from '../hooks/useBoardPage';
-import BoardEditModal from '../components/workspaces/BoardEditModal';
-import BoardDangerModal from '../components/workspaces/BoardDangerModal';
-import ListCreateModal from '../components/workspaces/ListCreateModal';
-import ListEditModal from '../components/workspaces/ListEditModal';
-import ListDangerModal from '../components/workspaces/ListDangerModal';
-import CardCreateModal from '../components/workspaces/CardCreateModal';
-import CardDetailModal from '../components/workspaces/CardDetailModal';
-import CardDangerModal from '../components/workspaces/CardDangerModal';
+import BoardEditModal from '../components/boards/BoardEditModal';
+import BoardDangerModal from '../components/boards/BoardDangerModal';
+import ListCreateModal from '../components/boards/ListCreateModal';
+import ListEditModal from '../components/boards/ListEditModal';
+import ListDangerModal from '../components/boards/ListDangerModal';
+import CardCreateModal from '../components/boards/CardCreateModal';
+import CardDetailModal from '../components/boards/CardDetailModal';
+import CardDangerModal from '../components/boards/CardDangerModal';
 import '../styles/dashboard.css';
 import '../styles/workspace.css';
 import '../styles/board.css';

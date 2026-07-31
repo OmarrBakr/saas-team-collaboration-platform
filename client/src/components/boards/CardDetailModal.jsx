@@ -124,7 +124,7 @@ export default function CardDetailModal({
                           }}
                         >
                           <span>{memberName}</span>
-                          <span className="card-assignee-check">{isSelected ? '✓' : ''}</span>
+                          <span className="card-assignee-check">{isSelected ? 'âœ“' : ''}</span>
                         </button>
                       );
                     })}
