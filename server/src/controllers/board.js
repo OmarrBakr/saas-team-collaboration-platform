@@ -27,7 +27,7 @@ const getColumnAndCard = (board, columnId, cardId) => {
   const column = board.columns.id(columnId);
 
   if (!column) {
-    throw new NotFoundError('Column not found');
+    throw new NotFoundError('List not found');
   }
 
   const card = column.cards.id(cardId);
@@ -114,6 +114,25 @@ const validateLabels = (labels) => {
   });
 };
 
+const deleteBoardAttachments = async (board) => {
+  const attachmentDeletions = [];
+
+  for (const column of board.columns) {
+    for (const card of column.cards) {
+      for (const attachment of card.attachments || []) {
+        attachmentDeletions.push(
+          cloudinaryDeleteCardAttachment(
+            attachment.publicId,
+            attachment.resourceType || 'image'
+          )
+        );
+      }
+    }
+  }
+
+  await Promise.all(attachmentDeletions);
+};
+
 const getWorkspaceBoards = async (req, res) => {
   const boards = await Board.find({ workspace: req.workspace._id }).sort({
     updatedAt: -1,
@@ -169,14 +188,10 @@ const updateBoard = async (req, res) => {
 };
 
 const deleteBoard = async (req, res) => {
-  const result = await Board.deleteOne({
-    _id: req.params.boardId,
-    workspace: req.workspace._id,
-  });
+  const board = await getBoardByWorkspace(req.params.boardId, req.workspace._id);
 
-  if (result.deletedCount === 0) {
-    throw new NotFoundError('Board not found');
-  }
+  await deleteBoardAttachments(board);
+  await board.deleteOne();
 
   res.status(StatusCodes.OK).json({ msg: 'Board deleted successfully' });
 };
@@ -185,7 +200,7 @@ const addColumn = async (req, res) => {
   const { title } = req.body;
 
   if (!title) {
-    throw new BadRequestError('Column title is required');
+    throw new BadRequestError('List title is required');
   }
 
   const board = await getBoardByWorkspace(req.params.boardId, req.workspace._id);
@@ -212,7 +227,7 @@ const addCard = async (req, res) => {
   const column = board.columns.id(columnId);
 
   if (!column) {
-    throw new NotFoundError('Column not found');
+    throw new NotFoundError('List not found');
   }
 
   column.cards.push({
@@ -231,14 +246,14 @@ const updateColumn = async (req, res) => {
   const { title } = req.body;
 
   if (!title) {
-    throw new BadRequestError('Column title is required');
+    throw new BadRequestError('List title is required');
   }
 
   const board = await getBoardByWorkspace(req.params.boardId, req.workspace._id);
   const column = board.columns.id(req.params.columnId);
 
   if (!column) {
-    throw new NotFoundError('Column not found');
+    throw new NotFoundError('List not found');
   }
 
   column.title = title;
@@ -252,11 +267,11 @@ const deleteColumn = async (req, res) => {
   const column = board.columns.id(req.params.columnId);
 
   if (!column) {
-    throw new NotFoundError('Column not found');
+    throw new NotFoundError('List not found');
   }
 
   if (column.cards.length > 0) {
-    throw new BadRequestError('Column must be empty before it can be deleted');
+    throw new BadRequestError('List must be empty before it can be deleted');
   }
 
   board.columns.pull(req.params.columnId);
@@ -266,7 +281,7 @@ const deleteColumn = async (req, res) => {
   });
 
   await board.save();
-  res.status(StatusCodes.OK).json({ msg: 'Column deleted successfully', board });
+  res.status(StatusCodes.OK).json({ msg: 'List deleted successfully', board });
 };
 
 const moveColumn = async (req, res) => {
@@ -280,7 +295,7 @@ const moveColumn = async (req, res) => {
   const column = board.columns.id(req.params.columnId);
 
   if (!column) {
-    throw new NotFoundError('Column not found');
+    throw new NotFoundError('List not found');
   }
 
   const currentIndex = board.columns.findIndex(
@@ -365,6 +380,14 @@ const deleteCard = async (req, res) => {
   for (const column of board.columns) {
     const card = column.cards.id(req.params.cardId);
     if (card) {
+      await Promise.all(
+        (card.attachments || []).map((attachment) =>
+          cloudinaryDeleteCardAttachment(
+            attachment.publicId,
+            attachment.resourceType || 'image'
+          )
+        )
+      );
       column.cards.pull(req.params.cardId);
       await board.save();
       return res.status(StatusCodes.OK).json({ msg: 'Card deleted successfully', board });
@@ -438,7 +461,7 @@ const moveCard = async (req, res) => {
   const toColumn = board.columns.id(toColumnId);
 
   if (!toColumn) {
-    throw new NotFoundError('Column not found');
+    throw new NotFoundError('List not found');
   }
 
   const cardData = card.toObject();

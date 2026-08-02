@@ -20,6 +20,14 @@ const {
 
 const INVITATION_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
 
+const assertWorkspaceHasNoBoards = async (workspaceId) => {
+  const boardCount = await Board.countDocuments({ workspace: workspaceId });
+
+  if (boardCount > 0) {
+    throw new BadRequestError('Delete all boards before deleting this workspace');
+  }
+};
+
 // ─── Workspace CRUD ───────────────────────────────────────────────────────────
 
 /**
@@ -153,7 +161,7 @@ const deleteWorkspace = async (req, res) => {
     await cloudinaryDeleteLogo(workspace._id);
   }
 
-  await Board.deleteMany({ workspace: workspace._id });
+  await assertWorkspaceHasNoBoards(workspace._id);
   await workspace.deleteOne();
 
   res.status(StatusCodes.OK).json({ msg: 'Workspace deleted successfully' });
@@ -293,7 +301,7 @@ const leaveWorkspace = async (req, res) => {
       await cloudinaryDeleteLogo(workspace._id);
     }
 
-    await Board.deleteMany({ workspace: workspace._id });
+    await assertWorkspaceHasNoBoards(workspace._id);
     await workspace.deleteOne();
 
     res.status(StatusCodes.OK).json({
