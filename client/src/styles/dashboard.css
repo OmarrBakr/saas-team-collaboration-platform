@@ -351,6 +351,7 @@
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .workspace-manage-btn {

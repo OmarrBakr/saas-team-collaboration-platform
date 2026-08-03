@@ -395,7 +395,7 @@
 }
 
 .modal-actions--space-between {
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .manage-member-list {

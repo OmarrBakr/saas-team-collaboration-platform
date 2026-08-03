@@ -1,5 +1,4 @@
 .workspace-shell {
-  min-height: 100vh;
   padding: 2rem;
   color: var(--text);
   display: grid;
@@ -53,7 +52,8 @@
   box-shadow: var(--shadow);
   border-radius: 28px;
   padding: 1.25rem;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
 }
 
@@ -91,8 +91,8 @@
   border: 0;
   border-radius: 16px;
   padding: 0.9rem 1rem;
-  background: rgba(255, 84, 84, 0.12);
-  color: #ffbcbc;
+  background: rgba(255, 84, 84, 0.18);
+  color: #ffd3d3;
   cursor: pointer;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -184,6 +184,7 @@
   display: grid;
   grid-template-columns: 1fr 0.9fr;
   gap: 1rem;
+  min-height: 50vh;
 }
 
 @media (max-width: 960px) {

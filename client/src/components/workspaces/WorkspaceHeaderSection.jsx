@@ -26,6 +26,14 @@ export default function WorkspaceHeaderSection({
         </button>
 
         <div className="workspace-action-group">
+          {isAdmin && (
+            <>
+              <button type="button" className="workspace-edit-btn" onClick={onEdit}>
+                Edit workspace
+              </button>
+            </>
+          )}
+
           {user && (
             <button type="button" className="workspace-leave-btn" onClick={onLeave}>
               Leave workspace
@@ -33,14 +41,9 @@ export default function WorkspaceHeaderSection({
           )}
 
           {isAdmin && (
-            <>
-              <button type="button" className="workspace-delete-btn" onClick={onDelete}>
-                Delete workspace
-              </button>
-              <button type="button" className="workspace-edit-btn" onClick={onEdit}>
-                Edit workspace
-              </button>
-            </>
+            <button type="button" className="workspace-delete-btn" onClick={onDelete}>
+              Delete workspace
+            </button>
           )}
         </div>
       </div>

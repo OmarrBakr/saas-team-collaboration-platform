@@ -210,18 +210,18 @@ export default function BoardPage() {
                 </div>
 
                 {column.cards?.length ? (
-                  <div className="board-card-list">
-                    {column.cards.map((card) => (
-                      <button
-                        type="button"
-                        key={card._id}
-                        className="board-card-item board-card-item--button"
-                        onClick={() => openCardDetailModal(card, column)}
-                      >
-                        <strong>{card.title}</strong>
-                      </button>
-                    ))}
-                  </div>
+                    <div className="board-card-list">
+                      {column.cards.map((card) => (
+                        <button
+                          type="button"
+                          key={card._id}
+                          className="board-card-item board-card-item--button"
+                          onClick={() => openCardDetailModal(card, column)}
+                        >
+                          <strong>{card.title}</strong>
+                        </button>
+                      ))}
+                    </div>
                 ) : (
                   <p className="empty-state">No cards in this list.</p>
                 )}
