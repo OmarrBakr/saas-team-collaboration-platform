@@ -10,13 +10,17 @@ const redirectToLogin = () => {
 };
 
 export const request = async (path, options = {}) => {
+  const { contentType = 'application/json', headers = {}, ...fetchOptions } = options;
+  const requestHeaders = { ...headers };
+
+  if (contentType) {
+    requestHeaders['Content-Type'] = contentType;
+  }
+
   const res = await fetch(path, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
+    ...fetchOptions,
+    headers: requestHeaders,
     credentials: 'include',
-    ...options,
   });
 
   // Only intercept 401 on non-auth endpoints so we don't loop forever

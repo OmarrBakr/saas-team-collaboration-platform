@@ -52,18 +52,10 @@ export const uploadCardAttachment = (workspaceId, boardId, cardId, file) => {
   const formData = new FormData();
   formData.append('attachment', file);
 
-  return fetch(`/api/v1/workspaces/${workspaceId}/boards/${boardId}/cards/${cardId}/attachments`, {
+  return request(`/api/v1/workspaces/${workspaceId}/boards/${boardId}/cards/${cardId}/attachments`, {
     method: 'POST',
-    credentials: 'include',
+    contentType: null,
     body: formData,
-  }).then(async (res) => {
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      throw new Error(data.msg || 'Something went wrong');
-    }
-
-    return data;
   });
 };
 
