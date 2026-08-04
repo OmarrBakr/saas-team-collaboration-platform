@@ -138,7 +138,7 @@
 }
 
 .card-detail-form {
-  gap: 1rem;
+  gap: 0rem;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -166,6 +166,7 @@
 .card-detail-section {
   display: grid;
   gap: 1rem;
+  margin-right: 1rem;
 }
 
 .board-detail-grid {
@@ -437,6 +438,7 @@
 .modal-actions--space-between {
   justify-content: flex-end;
   align-items: flex-end;
+  margin-right: 1rem;
 }
 
 .manage-member-list {

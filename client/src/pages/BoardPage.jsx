@@ -22,6 +22,12 @@ const formatDate = (value) =>
     year: 'numeric',
   }).format(new Date(value));
 
+const formatCardDueDate = (value) =>
+  new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date(value));
+
 export default function BoardPage() {
   const navigate = useNavigate();
   const { workspaceId, boardId } = useParams();
@@ -226,6 +232,44 @@ export default function BoardPage() {
                           onClick={() => openCardDetailModal(card, column)}
                         >
                           <strong>{card.title}</strong>
+                          {card.description && (
+                            <span className="board-card-meta-description">
+                              {card.description}
+                            </span>
+                          )}
+                          {(card.priority || card.dueDate || card.assignees?.length || card.labels?.length || card.attachments?.length) ? (
+                            <div className="board-card-meta">
+                              {card.priority && (
+                                <span className={`board-priority board-priority--${card.priority}`}>
+                                  {card.priority}
+                                </span>
+                              )}
+
+                              {card.dueDate && (
+                                <span className="board-card-meta-item">
+                                  Due {formatCardDueDate(card.dueDate)}
+                                </span>
+                              )}
+
+                              {card.assignees?.length ? (
+                                <span className="board-card-meta-item">
+                                  {card.assignees.length} assignee{card.assignees.length === 1 ? '' : 's'}
+                                </span>
+                              ) : null}
+
+                              {card.labels?.length ? (
+                                <span className="board-card-meta-item">
+                                  {card.labels.length} label{card.labels.length === 1 ? '' : 's'}
+                                </span>
+                              ) : null}
+
+                              {card.attachments?.length ? (
+                                <span className="board-card-meta-item">
+                                  {card.attachments.length} attachment{card.attachments.length === 1 ? '' : 's'}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </button>
                       ))}
                     </div>

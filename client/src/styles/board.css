@@ -205,6 +205,38 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+.board-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.board-card-meta-description {
+  display: block;
+  margin-bottom: 0.25rem;
+  width: 100%;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.board-card-meta-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .board-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
