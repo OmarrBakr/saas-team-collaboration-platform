@@ -6,10 +6,13 @@ import { getCurrentUser } from '../services/auth';
 const AuthContext = createContext(null);
 
 const isPublicTokenPage = (pathname) =>
+  pathname === '/login' ||
   pathname === '/reset-password' ||
   pathname === '/user/reset-password' ||
   pathname === '/verify-email' ||
-  pathname === '/user/verify-email';
+  pathname === '/user/verify-email' ||
+  pathname === '/register' ||
+  pathname === '/forgot-password';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { forgetPassword, login, register } from '../services/auth';
 import { useAuth } from '../context/AuthContext';
@@ -22,11 +22,7 @@ const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 export default function AuthPage() {
   const { setUser } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // After login, redirect to the page the user originally tried to visit
-  // (stored by ProtectedRoute), or fall back to "/"
-  const intendedPath = location.state?.from?.pathname ?? '/';
 
   const [activeTab, setActiveTab] = useState('login');
   const [form, setForm] = useState(initialForm);
@@ -105,7 +101,7 @@ export default function AuthPage() {
         setForm(initialForm);
       } else {
         setUser(result.user);
-        navigate(intendedPath, { replace: true });
+        navigate('/', { replace: true });
       }
     } catch (err) {
       setError(err.message || 'Something went wrong');
@@ -197,4 +193,3 @@ export default function AuthPage() {
     </main>
   );
 }
-

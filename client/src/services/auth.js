@@ -4,6 +4,11 @@
 
 let refreshPromise = null;
 
+const redirectToLogin = () => {
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  window.location.assign('/login');
+};
+
 export const request = async (path, options = {}) => {
   const res = await fetch(path, {
     headers: {
@@ -32,6 +37,7 @@ export const request = async (path, options = {}) => {
       })
         .then((refreshRes) => {
           if (!refreshRes.ok) {
+            redirectToLogin();
             throw new Error('Session expired. Please sign in again.');
           }
         })

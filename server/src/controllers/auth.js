@@ -10,6 +10,14 @@ const sendResetPasswordEmail = require('../utils/sendResetPasswordEmail');
 const createHash = require('../utils/createHash');
 const crypto = require('crypto');
 
+const buildUserResponse = (user) => ({
+  id: user._id,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  email: user.email,
+  isVerified: user.isVerified,
+});
+
 const createPersonalWorkspace = async (user) => {
   await Workspace.create({
     name: `${user.firstName}'s Workspace`,
@@ -60,12 +68,7 @@ const register = async (req, res) => {
   });
 
   res.status(StatusCodes.CREATED).json({
-    user: {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      isVerified: user.isVerified,
-    },
+    user: buildUserResponse(user),
   });
 };
 
@@ -97,12 +100,7 @@ const login = async (req, res) => {
   attachCookies(res, accessToken, refreshToken);
 
   res.status(StatusCodes.OK).json({
-    user: {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      isVerified: user.isVerified,
-    },
+    user: buildUserResponse(user),
   });
 };
 
