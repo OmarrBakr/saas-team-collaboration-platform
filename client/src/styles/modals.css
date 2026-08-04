@@ -298,6 +298,46 @@
   gap: 0.45rem;
 }
 
+.card-assignee-chip-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.card-assignee-text {
+  display: grid;
+  gap: 0.12rem;
+  color: var(--text);
+}
+
+.card-assignee-text strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.card-assignee-text span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.card-assignee-open-btn {
+  width: fit-content;
+  border: 1px solid rgba(119, 166, 255, 0.2);
+  background: rgba(119, 166, 255, 0.12);
+  color: #dce7ff;
+  padding: 0.78rem 1rem;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.card-assignee-open-btn:hover,
+.card-assignee-open-btn:focus-visible {
+  background: rgba(119, 166, 255, 0.18);
+  border-color: rgba(119, 166, 255, 0.35);
+  box-shadow: 0 0 0 3px rgba(119, 166, 255, 0.1);
+}
+
 .card-assignee-label {
   display: flex;
   align-items: center;
@@ -396,6 +436,7 @@
 
 .modal-actions--space-between {
   justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .manage-member-list {
@@ -415,6 +456,35 @@
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.card-assignee-row {
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.card-assignee-row--selected {
+  border-color: rgba(159, 182, 255, 0.35);
+  background: rgba(159, 182, 255, 0.08);
+}
+
+.card-assignee-row:disabled {
+  cursor: not-allowed;
+}
+
+.card-assignee-row .card-assignee-check {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #9fb6ff;
+}
+
+.card-assignee-pill--selected {
+  background: rgba(159, 182, 255, 0.14);
+  color: #dce7ff;
+  border: 1px solid rgba(159, 182, 255, 0.28);
 }
 
 .manage-member-info {

@@ -18,10 +18,7 @@ export default function CardDetailModal({
   onAddLabel,
   onRemoveLabel,
   hasChanges,
-  isAssigneeMenuOpen,
-  onToggleAssigneeMenu,
-  onToggleAssignee,
-  onCloseAssigneeMenu,
+  onOpenAssignees,
 }) {
   if (!isOpen) return null;
 
@@ -31,7 +28,6 @@ export default function CardDetailModal({
       role="presentation"
       onClick={() => {
         if (!isSubmitting) {
-          onCloseAssigneeMenu?.();
           onClose();
         }
       }}
@@ -92,44 +88,31 @@ export default function CardDetailModal({
             </div>
 
             <div className="card-assignee-field">
-              <span className="card-assignee-label">Assignees</span>
-              <div className="card-assignee-picker">
-                <button
-                  type="button"
-                  className="manage-role-select card-assignee-trigger"
-                  onClick={onToggleAssigneeMenu}
-                >
-                  <span>{form.assignees.length ? `${form.assignees.length} selected` : 'Select members'}</span>
+              <span className="card-assignee-label">
+                <span>Assignees</span>
+                <button type="button" className="card-assignee-open-btn" onClick={onOpenAssignees}>
+                  Assign members
                 </button>
+              </span>
+              <div className="card-assignee-chip-list">
+                {workspaceMembers
+                  .filter((member) => {
+                    const memberId = (member.user?._id || member.user?.id || member.user || '').toString();
+                    return form.assignees.includes(memberId);
+                  })
+                  .map((member) => {
+                    const memberId = (member.user?._id || member.user?.id || member.user || '').toString();
+                    const memberName = member.user?.firstName || member.user?.lastName
+                      ? `${member.user?.firstName || ''} ${member.user?.lastName || ''}`.trim()
+                      : member.user?.email || 'Member';
 
-                {isAssigneeMenuOpen && (
-                  <div className="card-assignee-menu" role="menu">
-                    {workspaceMembers.map((member) => {
-                      const memberId = (member.user?._id || member.user?.id || member.user || '').toString();
-                      const memberName = member.user?.firstName || member.user?.lastName
-                        ? `${member.user?.firstName || ''} ${member.user?.lastName || ''}`.trim()
-                        : member.user?.email || 'Member';
-                      const isSelected = form.assignees.includes(memberId);
-
-                      return (
-                        <button
-                          key={memberId}
-                          type="button"
-                          role="menuitemcheckbox"
-                          aria-checked={isSelected}
-                          className="card-assignee-option"
-                          onClick={() => {
-                            onToggleAssignee(memberId);
-                            onCloseAssigneeMenu?.();
-                          }}
-                        >
-                          <span>{memberName}</span>
-                          <span className="card-assignee-check">{isSelected ? 'âœ“' : ''}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                    return (
+                      <div key={memberId} className="card-assignee-text">
+                        <strong>{memberName}</strong>
+                        <span>{member.user?.email || ''}</span>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
 
@@ -219,12 +202,19 @@ export default function CardDetailModal({
             <button type="button" className="workspace-delete-btn" onClick={onDeleteCard} disabled={isSubmitting}>
               Delete card
             </button>
-            <button type="button" className="secondary-btn" onClick={onClose} disabled={isSubmitting}>
-              Cancel
-            </button>
-            <button type="submit" className="primary-btn" disabled={isSubmitting || !hasChanges}>
-              {isSubmitting ? 'Saving...' : 'Save changes'}
-            </button>
+
+            <div className="modal-actions">
+              <button type="button" className="secondary-btn" onClick={onClose} disabled={isSubmitting}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="primary-btn"
+                disabled={isSubmitting || !form.title.trim() || !onSubmit || !hasChanges}
+              >
+                {isSubmitting ? 'Saving...' : 'Save changes'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

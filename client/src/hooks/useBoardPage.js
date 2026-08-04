@@ -73,6 +73,7 @@ export default function useBoardPage(workspaceId, boardId) {
   const [isListDeletingOpen, setIsListDeletingOpen] = useState(false);
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [isCardDetailOpen, setIsCardDetailOpen] = useState(false);
+  const [isCardAssigneesOpen, setIsCardAssigneesOpen] = useState(false);
   const [isCardDeletingOpen, setIsCardDeletingOpen] = useState(false);
   const [isCardDeleted, setIsCardDeleted] = useState(false);
   const [activeList, setActiveList] = useState(null);
@@ -88,6 +89,7 @@ export default function useBoardPage(workspaceId, boardId) {
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
+  const [cardAssigneeDraft, setCardAssigneeDraft] = useState([]);
 
   useEffect(() => {
     const loadBoard = async () => {
@@ -259,6 +261,7 @@ export default function useBoardPage(workspaceId, boardId) {
     };
     setCardDetailForm(nextCardDetailForm);
     setCardDetailInitialForm(nextCardDetailForm);
+    setCardAssigneeDraft(nextCardDetailForm.assignees);
     setLabelDraft({ title: '', color: '#9fb6ff' });
     setIsCardDetailOpen(true);
     setIsAssigneeMenuOpen(false);
@@ -295,6 +298,32 @@ export default function useBoardPage(workspaceId, boardId) {
 
   const closeAssigneeMenu = () => {
     setIsAssigneeMenuOpen(false);
+  };
+
+  const openCardAssigneesModal = () => {
+    setCardAssigneeDraft(cardDetailForm.assignees);
+    setCardError('');
+    setIsCardAssigneesOpen(true);
+  };
+
+  const closeCardAssigneesModal = () => {
+    setIsCardAssigneesOpen(false);
+  };
+
+  const toggleCardAssigneeDraft = (memberId) => {
+    setCardAssigneeDraft((current) =>
+      current.includes(memberId)
+        ? current.filter((id) => id !== memberId)
+        : [...current, memberId]
+    );
+  };
+
+  const saveCardAssignees = () => {
+    setCardDetailForm((current) => ({
+      ...current,
+      assignees: cardAssigneeDraft,
+    }));
+    setIsCardAssigneesOpen(false);
   };
 
   const handleLabelDraftChange = (event) => {
@@ -558,8 +587,10 @@ export default function useBoardPage(workspaceId, boardId) {
     isListDeletingOpen,
     isCardOpen,
     isCardDetailOpen,
+    isCardAssigneesOpen,
     isCardDeletingOpen,
     isAssigneeMenuOpen,
+    cardAssigneeDraft,
     activeList,
     activeCard,
     listMenuOpenId,
@@ -588,6 +619,10 @@ export default function useBoardPage(workspaceId, boardId) {
     handleCardChange,
     handleCardDetailChange,
     closeAssigneeMenu,
+    openCardAssigneesModal,
+    closeCardAssigneesModal,
+    toggleCardAssigneeDraft,
+    saveCardAssignees,
     setIsAssigneeMenuOpen,
     toggleAssignee,
     handleLabelDraftChange,

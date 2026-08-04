@@ -8,6 +8,7 @@ import ListEditModal from '../components/boards/ListEditModal';
 import ListDangerModal from '../components/boards/ListDangerModal';
 import CardCreateModal from '../components/boards/CardCreateModal';
 import CardDetailModal from '../components/boards/CardDetailModal';
+import CardAssigneesModal from '../components/boards/CardAssigneesModal';
 import CardDangerModal from '../components/boards/CardDangerModal';
 import '../styles/dashboard.css';
 import '../styles/workspace.css';
@@ -49,6 +50,7 @@ export default function BoardPage() {
     isListDeletingOpen,
     isCardOpen,
     isCardDetailOpen,
+    isCardAssigneesOpen,
     isCardDeletingOpen,
     isAssigneeMenuOpen,
     activeList,
@@ -76,6 +78,7 @@ export default function BoardPage() {
     openDeleteListModal,
     openCardModal,
     openCardDetailModal,
+    openCardAssigneesModal,
     handleListChange,
     handleCardChange,
     handleCardDetailChange,
@@ -93,6 +96,7 @@ export default function BoardPage() {
     handleDeleteAttachment,
     toggleAssignee,
     hasListEditChanges,
+    cardAssigneeDraft,
     setIsEditOpen,
     setIsDeletingOpen,
     setIsListOpen,
@@ -100,6 +104,9 @@ export default function BoardPage() {
     setIsListDeletingOpen,
     setIsCardOpen,
     setIsCardDetailOpen,
+    closeCardAssigneesModal,
+    toggleCardAssigneeDraft,
+    saveCardAssignees,
     setIsCardDeletingOpen,
   } = useBoardPage(workspaceId, boardId);
 
@@ -346,10 +353,17 @@ export default function BoardPage() {
         onAddLabel={addCardLabel}
         onRemoveLabel={removeCardLabel}
         hasChanges={hasCardDetailChanges}
-        isAssigneeMenuOpen={isAssigneeMenuOpen}
-        onToggleAssigneeMenu={() => setIsAssigneeMenuOpen((current) => !current)}
-        onToggleAssignee={toggleAssignee}
-        onCloseAssigneeMenu={() => setIsAssigneeMenuOpen(false)}
+        onOpenAssignees={openCardAssigneesModal}
+      />
+
+      <CardAssigneesModal
+        isOpen={isCardAssigneesOpen}
+        members={workspaceMembers}
+        selectedAssignees={cardAssigneeDraft}
+        onToggleAssignee={toggleCardAssigneeDraft}
+        onClose={closeCardAssigneesModal}
+        onSave={saveCardAssignees}
+        isSaving={false}
       />
 
       <CardDangerModal
