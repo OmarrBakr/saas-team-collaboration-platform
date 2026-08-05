@@ -295,3 +295,37 @@
     min-width: 8rem;
   }
 }
+
+@media (max-width: 640px) {
+  .board-column-card {
+    min-width: 15.5rem;
+    width: 15.5rem;
+    padding: 1rem;
+    border-radius: 20px;
+  }
+
+  .board-create-list-btn {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .board-list-head,
+  .board-card-title-row,
+  .board-card-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .board-list-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .board-card-item {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .board-card-meta-description {
+    -webkit-line-clamp: 3;
+  }
+}

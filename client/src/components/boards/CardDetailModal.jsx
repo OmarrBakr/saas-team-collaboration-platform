@@ -148,15 +148,17 @@ export default function CardDetailModal({
                   onChange={onLabelDraftChange}
                   placeholder="Label title"
                 />
-                <input
-                  name="color"
-                  type="color"
-                  value={labelDraft.color}
-                  onChange={onLabelDraftChange}
-                />
-                <button type="button" className="secondary-btn card-label-add-btn" onClick={onAddLabel}>
-                  Add label
-                </button>
+                <div className="card-label-draft-actions">
+                  <input
+                    name="color"
+                    type="color"
+                    value={labelDraft.color}
+                    onChange={onLabelDraftChange}
+                  />
+                  <button type="button" className="secondary-btn card-label-add-btn" onClick={onAddLabel}>
+                    Add label
+                  </button>
+                </div>
               </div>
             </section>
 

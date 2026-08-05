@@ -187,6 +187,12 @@
   min-height: 50vh;
 }
 
+@media (max-width: 1200px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 960px) {
   .workspace-shell {
     padding: 1rem;
@@ -208,6 +214,32 @@
   .workspace-action-group {
     margin-left: 0;
     flex-wrap: wrap;
+  }
+
+  .workspace-empty-card,
+  .workspace-hero {
+    border-radius: 22px;
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace-hero-main {
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .workspace-hero-main h1 {
+    font-size: clamp(1.8rem, 7vw, 2.4rem);
+  }
+
+  .workspace-action-group {
+    width: 100%;
+  }
+
+  .workspace-list-item,
+  .member-item {
+    align-items: start;
   }
 }
 

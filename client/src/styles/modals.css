@@ -10,6 +10,8 @@
 
 .modal-card {
   width: min(100%, 36rem);
+  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
   border-radius: 24px;
   border: 1px solid var(--panel-border);
   background: rgba(8, 12, 21, 0.98);
@@ -216,6 +218,13 @@
   grid-template-columns: minmax(0, 1fr) 3.25rem auto;
   gap: 0.6rem;
   align-items: center;
+}
+
+.card-label-draft-actions {
+  display: contents;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
 }
 
 .card-label-draft input[type='color'] {
@@ -549,16 +558,174 @@
   display: block;
 }
 
-@media (max-width: 960px) {
-  .board-detail-grid {
+@media (max-width: 768px) {
+  .modal-card {
+    width: 100%;
+    max-width: calc(100vw - 1rem);
+    padding: 1rem;
+    border-radius: 22px;
+  }
+
+  .modal-card--wide {
+    width: 100%;
+    max-width: calc(100vw - 1rem);
+  }
+
+  .modal-card--scrollable {
+    max-height: calc(100vh - 1rem);
+  }
+
+  .modal-backdrop {
+    padding: 0.5rem;
+    align-items: stretch;
+  }
+
+  .modal-card,
+  .modal-card--scrollable {
+    overflow-x: hidden;
+  }
+
+  .card-detail-section {
+    margin-right: 0;
+  }
+
+  .card-detail-form {
+    padding-right: 0;
+  }
+
+  .modal-actions,
+  .modal-actions--space-between {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: stretch;
+    margin-right: 0;
+  }
+
+  .modal-actions .secondary-btn,
+  .modal-actions .primary-btn {
+    width: 100%;
+  }
+
+  .manage-member-list {
+    max-height: min(52vh, 30rem);
+  }
+
+  .manage-member-row,
+  .board-attachment-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .modal-backdrop {
+    padding: 0.25rem;
+  }
+
+  .modal-card,
+  .modal-card--wide {
+    width: 100%;
+    max-width: calc(100vw - 0.5rem);
+    padding: 0.85rem;
+    border-radius: 18px;
+  }
+
+  .modal-card--scrollable {
+    max-height: calc(100vh - 0.5rem);
+  }
+
+  .modal-head {
+    align-items: stretch;
+  }
+
+  .modal-head .icon-button {
+    align-self: flex-end;
+  }
+
+  .workspace-form input,
+  .workspace-form textarea,
+  .workspace-form select,
+  .manage-role-select,
+  .card-assignee-trigger {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .card-assignee-open-btn {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .board-detail-grid,
+  .card-label-draft {
     grid-template-columns: 1fr;
   }
 
-  .card-label-draft {
-    grid-template-columns: 1fr 3rem;
+  .card-label-draft-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
   }
 
   .card-label-draft .secondary-btn {
-    grid-column: 1 / -1;
+    grid-column: auto;
+  }
+
+  .card-label-draft input[name='title'] {
+    width: 100%;
+  }
+
+  .card-assignee-trigger,
+  .manage-role-select {
+    width: 100%;
+  }
+
+  .card-assignee-label {
+    align-items: flex-start;
+  }
+
+  .card-assignee-menu {
+    max-height: 12rem;
+  }
+
+  .modal-head {
+    gap: 0.75rem;
+  }
+
+  .modal-head > div {
+    min-width: 0;
+  }
+
+  .card-label-chip-list,
+  .card-assignee-chip-list {
+    min-width: 0;
+  }
+
+  .board-attachment-row,
+  .manage-member-row {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .board-attachment-row a,
+  .manage-member-info,
+  .card-assignee-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .card-label-add-btn,
+  .card-assignee-open-btn,
+  .manage-role-select,
+  .card-assignee-trigger {
+    max-width: 100%;
+  }
+
+  .card-label-draft-actions .card-label-add-btn {
+    width: 100%;
   }
 }
