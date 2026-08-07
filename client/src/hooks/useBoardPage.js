@@ -519,6 +519,9 @@ export default function useBoardPage(workspaceId, boardId) {
 
     if (fromIndex < 0) return;
     if (toIndex < 0) toIndex = toColumn.cards.length;
+    if (fromColumn._id?.toString() === toColumn._id?.toString() && fromIndex === toIndex) {
+      return;
+    }
 
     setBoard((current) => {
       if (!current?.columns?.length) return current;
