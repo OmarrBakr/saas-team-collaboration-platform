@@ -31,6 +31,12 @@ export const deleteList = (workspaceId, boardId, columnId) =>
     method: 'DELETE',
   });
 
+export const moveList = (workspaceId, boardId, columnId, payload) =>
+  request(`/api/v1/workspaces/${workspaceId}/boards/${boardId}/columns/${columnId}/move`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
 export const createCard = (workspaceId, boardId, columnId, payload) =>
   request(`/api/v1/workspaces/${workspaceId}/boards/${boardId}/columns/${columnId}/cards`, {
     method: 'POST',

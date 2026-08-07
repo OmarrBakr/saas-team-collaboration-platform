@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +11,7 @@ import {
   deleteCardAttachment,
   deleteList,
   getBoard,
+  moveList,
   updateBoard,
   updateCard,
   updateList,
@@ -28,6 +29,16 @@ const findCardById = (board, cardId) => {
     if (card) return card;
   }
   return null;
+};
+
+const reorderColumns = (columns, fromIndex, toIndex) => {
+  const nextColumns = [...columns];
+  const [movedColumn] = nextColumns.splice(fromIndex, 1);
+  nextColumns.splice(toIndex, 0, movedColumn);
+  return nextColumns.map((column, index) => ({
+    ...column,
+    position: index,
+  }));
 };
 
 export default function useBoardPage(workspaceId, boardId) {
@@ -90,6 +101,11 @@ export default function useBoardPage(workspaceId, boardId) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
   const [cardAssigneeDraft, setCardAssigneeDraft] = useState([]);
+  const [draggedColumnId, setDraggedColumnId] = useState('');
+  const [dragOverColumnId, setDragOverColumnId] = useState('');
+  const dragPointerIdRef = useRef(null);
+  const dragColumnElementRef = useRef(null);
+  const dragTouchIdRef = useRef(null);
 
   useEffect(() => {
     const loadBoard = async () => {
@@ -200,6 +216,178 @@ export default function useBoardPage(workspaceId, boardId) {
       setIsDeletingBoard(false);
     }
   };
+
+  const finishColumnDrag = async () => {
+    const draggedId = dragPointerIdRef.current?.draggedColumnId;
+    const targetId = dragPointerIdRef.current?.dragOverColumnId;
+
+    dragPointerIdRef.current = null;
+    dragColumnElementRef.current = null;
+
+    if (!board?.columns?.length || !draggedId || !targetId) {
+      setDraggedColumnId('');
+      setDragOverColumnId('');
+      return;
+    }
+
+    const columns = board.columns || [];
+    const fromIndex = columns.findIndex((column) => column._id?.toString() === draggedId.toString());
+    const toIndex = columns.findIndex((column) => column._id?.toString() === targetId.toString());
+
+    setDraggedColumnId('');
+    setDragOverColumnId('');
+
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) {
+      return;
+    }
+
+    setBoard((current) => {
+      if (!current?.columns?.length) return current;
+      return {
+        ...current,
+        columns: reorderColumns(current.columns, fromIndex, toIndex),
+      };
+    });
+
+    try {
+      const result = await moveList(workspaceId, boardId, draggedId, { toPosition: toIndex });
+      setBoard(result.board);
+    } catch (err) {
+      setError(err.message || 'Something went wrong');
+      setBoard((current) => {
+        if (!current?.columns?.length) return current;
+        return {
+          ...current,
+          columns: reorderColumns(current.columns, toIndex, fromIndex),
+        };
+      });
+    }
+  };
+
+  const updateDragTargetFromPoint = (clientX, clientY) => {
+    const element = document.elementFromPoint(clientX, clientY);
+    const columnElement = element?.closest?.('[data-column-id]');
+    const columnId = columnElement?.dataset?.columnId || '';
+
+    if (columnId) {
+      setDragOverColumnId(columnId);
+      dragPointerIdRef.current = {
+        ...(dragPointerIdRef.current || {}),
+        dragOverColumnId: columnId,
+      };
+    }
+  };
+
+  const handleColumnDragStart = (columnId, event) => {
+    if (!isAdmin) return;
+
+    event.preventDefault();
+    dragPointerIdRef.current = {
+      pointerId: event.pointerId,
+      draggedColumnId: columnId,
+      dragOverColumnId: columnId,
+    };
+    dragColumnElementRef.current = event.currentTarget;
+    setDraggedColumnId(columnId);
+    setDragOverColumnId(columnId);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handleColumnDragMove = (event) => {
+    if (!dragPointerIdRef.current || event.pointerId !== dragPointerIdRef.current.pointerId) return;
+    event.preventDefault();
+    updateDragTargetFromPoint(event.clientX, event.clientY);
+  };
+
+  const handleColumnDragEnd = async (event) => {
+    if (dragPointerIdRef.current && event?.pointerId !== dragPointerIdRef.current.pointerId) return;
+    await finishColumnDrag();
+  };
+
+  const getTouchPoint = (touches, touchId) => {
+    for (const touch of touches) {
+      if (touch.identifier === touchId) {
+        return touch;
+      }
+    }
+
+    return null;
+  };
+
+  const handleColumnTouchStart = (columnId, event) => {
+    if (!isAdmin) return;
+
+    const touch = event.touches?.[0];
+    if (!touch) return;
+
+    event.preventDefault();
+    dragTouchIdRef.current = touch.identifier;
+    dragPointerIdRef.current = {
+      draggedColumnId: columnId,
+      dragOverColumnId: columnId,
+    };
+    dragColumnElementRef.current = event.currentTarget;
+    setDraggedColumnId(columnId);
+    setDragOverColumnId(columnId);
+  };
+
+  const handleWindowTouchMove = (event) => {
+    if (dragTouchIdRef.current === null || !dragPointerIdRef.current) return;
+
+    const touch = getTouchPoint(event.touches, dragTouchIdRef.current);
+    if (!touch) return;
+
+    event.preventDefault();
+    updateDragTargetFromPoint(touch.clientX, touch.clientY);
+  };
+
+  const handleWindowTouchEnd = async (event) => {
+    if (dragTouchIdRef.current === null || !dragPointerIdRef.current) return;
+
+    const touch = getTouchPoint(event.changedTouches, dragTouchIdRef.current);
+    if (!touch) return;
+
+    event.preventDefault();
+    dragTouchIdRef.current = null;
+    await finishColumnDrag();
+  };
+
+  const handleWindowTouchCancel = () => {
+    dragTouchIdRef.current = null;
+    dragPointerIdRef.current = null;
+    dragColumnElementRef.current = null;
+    setDraggedColumnId('');
+    setDragOverColumnId('');
+  };
+
+  useEffect(() => {
+    const handleWindowPointerUp = () => {
+      if (dragPointerIdRef.current) {
+        finishColumnDrag();
+      }
+    };
+
+    const handleWindowPointerCancel = () => {
+      dragPointerIdRef.current = null;
+      dragColumnElementRef.current = null;
+      setDraggedColumnId('');
+      setDragOverColumnId('');
+    };
+
+    window.addEventListener('pointerup', handleWindowPointerUp);
+    window.addEventListener('pointercancel', handleWindowPointerCancel);
+    window.addEventListener('touchmove', handleWindowTouchMove, { passive: false });
+    window.addEventListener('touchend', handleWindowTouchEnd, { passive: false });
+    window.addEventListener('touchcancel', handleWindowTouchCancel);
+
+    return () => {
+      window.removeEventListener('pointerup', handleWindowPointerUp);
+      window.removeEventListener('pointercancel', handleWindowPointerCancel);
+      window.removeEventListener('touchmove', handleWindowTouchMove);
+      window.removeEventListener('touchend', handleWindowTouchEnd);
+      window.removeEventListener('touchcancel', handleWindowTouchCancel);
+    };
+  }, [board, workspaceId, boardId]);
 
   const openListModal = () => {
     setListError('');
@@ -601,6 +789,8 @@ export default function useBoardPage(workspaceId, boardId) {
     isEditingCard,
     isDeletingCard,
     isUploadingAttachment,
+    draggedColumnId,
+    dragOverColumnId,
     hasBoardEditChanges,
     hasListEditChanges,
     hasCardDetailChanges,
@@ -637,6 +827,10 @@ export default function useBoardPage(workspaceId, boardId) {
     confirmDeleteCard,
     handleAttachmentUpload,
     handleDeleteAttachment,
+    handleColumnDragStart,
+    handleColumnDragMove,
+    handleColumnDragEnd,
+    handleColumnTouchStart,
     setIsEditOpen,
     setIsDeletingOpen,
     setIsListOpen,

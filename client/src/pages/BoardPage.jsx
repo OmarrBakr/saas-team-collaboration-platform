@@ -69,6 +69,8 @@ export default function BoardPage() {
     isEditingCard,
     isDeletingCard,
     isUploadingAttachment,
+    draggedColumnId,
+    dragOverColumnId,
     attachmentError,
     hasBoardEditChanges,
     hasCardDetailChanges,
@@ -100,6 +102,10 @@ export default function BoardPage() {
     confirmDeleteCard,
     handleAttachmentUpload,
     handleDeleteAttachment,
+    handleColumnDragStart,
+    handleColumnDragMove,
+    handleColumnDragEnd,
+    handleColumnTouchStart,
     toggleAssignee,
     hasListEditChanges,
     cardAssigneeDraft,
@@ -183,11 +189,29 @@ export default function BoardPage() {
         {board.columns?.length ? (
           <>
             {board.columns.map((column) => (
-              <article key={column._id} className="board-column-card">
+              <article
+                key={column._id}
+                data-column-id={column._id}
+                className={`board-column-card${draggedColumnId === column._id ? ' board-column-card--dragging' : ''}${dragOverColumnId === column._id ? ' board-column-card--drop-target' : ''}`}
+              >
                 <div className="panel-head">
                   <div className="board-list-head">
-                    <h2>{column.title}</h2>
+                    <h2 className="board-list-title">{column.title}</h2>
                     <div className="board-list-actions">
+                      {isAdmin && (
+                        <span
+                          className="board-drag-handle"
+                          aria-hidden="true"
+                          title="Drag to reorder"
+                          onPointerDown={(event) => handleColumnDragStart(column._id, event)}
+                          onPointerMove={handleColumnDragMove}
+                          onPointerUp={handleColumnDragEnd}
+                          onPointerCancel={handleColumnDragEnd}
+                          onTouchStart={(event) => handleColumnTouchStart(column._id, event)}
+                        >
+                          :::
+                        </span>
+                      )}
                       <span className="workspace-badge">{column.cards?.length || 0}</span>
                       {isAdmin && (
                         <div className="board-list-menu-wrap">
