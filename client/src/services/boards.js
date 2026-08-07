@@ -37,6 +37,15 @@ export const moveList = (workspaceId, boardId, columnId, payload) =>
     body: JSON.stringify(payload),
   });
 
+export const moveCard = (workspaceId, boardId, cardId, fromColumnId, toColumnId, payload) =>
+  request(
+    `/api/v1/workspaces/${workspaceId}/boards/${boardId}/cards/${cardId}/move/${fromColumnId}/${toColumnId}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }
+  );
+
 export const createCard = (workspaceId, boardId, columnId, payload) =>
   request(`/api/v1/workspaces/${workspaceId}/boards/${boardId}/columns/${columnId}/cards`, {
     method: 'POST',

@@ -246,6 +246,28 @@
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
 }
 
+.board-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.board-card-item--dragging {
+  opacity: 0.9;
+  border-color: rgba(159, 182, 255, 0.8);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(159, 182, 255, 0.22);
+}
+
+.board-card-item--drop-target {
+  border-color: rgba(159, 182, 255, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(159, 182, 255, 0.3),
+    0 0 0 6px rgba(159, 182, 255, 0.12),
+    0 14px 28px rgba(159, 182, 255, 0.14);
+}
+
 .board-card-item--button {
   width: 100%;
   text-align: left;
@@ -261,6 +283,29 @@
 .board-card-item--button:hover {
   border-color: rgba(155, 175, 255, 0.28);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.board-card-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  min-height: 1.4rem;
+  color: rgba(220, 231, 255, 0.72);
+  font-size: 1.05rem;
+  letter-spacing: -0.1rem;
+  user-select: none;
+  border-radius: 999px;
+  padding: 0.15rem 0.2rem;
+  cursor: grab;
+}
+
+.board-card-drag-handle:hover {
+  cursor: grab;
+}
+
+.board-card-drag-handle:active {
+  cursor: grabbing;
 }
 
 .board-card-meta {

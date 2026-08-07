@@ -71,6 +71,8 @@ export default function BoardPage() {
     isUploadingAttachment,
     draggedColumnId,
     dragOverColumnId,
+    draggedCardId,
+    dragOverCardId,
     attachmentError,
     hasBoardEditChanges,
     hasCardDetailChanges,
@@ -106,6 +108,15 @@ export default function BoardPage() {
     handleColumnDragMove,
     handleColumnDragEnd,
     handleColumnTouchStart,
+    handleCardDragStart,
+    handleCardDragMove,
+    handleCardDragEnd,
+    handleCardTouchStart,
+    handleCardPointerDown,
+    handleCardPointerMove,
+    handleCardPointerUp,
+    handleCardPointerCancel,
+    suppressCardClickRef,
     toggleAssignee,
     hasListEditChanges,
     cardAssigneeDraft,
@@ -252,10 +263,25 @@ export default function BoardPage() {
                         <button
                           type="button"
                           key={card._id}
-                          className="board-card-item board-card-item--button"
-                          onClick={() => openCardDetailModal(card, column)}
+                          data-column-id={column._id}
+                          data-card-id={card._id}
+                          className={`board-card-item board-card-item--button${draggedCardId === card._id ? ' board-card-item--dragging' : ''}${dragOverCardId === card._id ? ' board-card-item--drop-target' : ''}`}
+                          onClick={() => {
+                            if (suppressCardClickRef.current) {
+                              suppressCardClickRef.current = false;
+                              return;
+                            }
+                            openCardDetailModal(card, column);
+                          }}
+                          onPointerDown={(event) => handleCardPointerDown(column._id, card._id, event)}
+                          onPointerMove={handleCardPointerMove}
+                          onPointerUp={handleCardPointerUp}
+                          onPointerCancel={handleCardPointerCancel}
+                          onTouchStart={(event) => handleCardTouchStart(column._id, card._id, event)}
                         >
-                          <strong>{card.title}</strong>
+                          <div className="board-card-head">
+                            <strong>{card.title}</strong>
+                          </div>
                           {card.description && (
                             <span className="board-card-meta-description">
                               {card.description}
