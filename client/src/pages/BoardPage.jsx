@@ -185,9 +185,7 @@ export default function BoardPage() {
           <div>
             <p className="dashboard-kicker">Board</p>
             <h1>{board.name}</h1>
-            <p className="dashboard-intro">
-              {board.description}
-            </p>
+            {board.description ? <p className="dashboard-intro">{board.description}</p> : null}
           </div>
         </div>
 
