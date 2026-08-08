@@ -38,7 +38,8 @@ const startServer = async () => {
   await connectDB();
 
   const httpServer = http.createServer(app);
-  setupSocket(httpServer);
+  const io = setupSocket(httpServer);
+  app.set('io', io);
 
   httpServer.listen(port, () => {
     console.log(`Server listening on port ${port}`);

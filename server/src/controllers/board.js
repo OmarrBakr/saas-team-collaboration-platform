@@ -9,6 +9,14 @@ const {
   uploadCardAttachment: cloudinaryUploadCardAttachment,
   deleteCardAttachment: cloudinaryDeleteCardAttachment,
 } = require('../utils/cloudinary');
+const { emitBoardEvent } = require('../realtime/socket');
+
+const broadcastBoardEvent = (req, eventName, board, payload) => {
+  emitBoardEvent(req.app.get('io'), eventName, board, {
+    actorId: req.user?.userId?.toString?.(),
+    ...payload,
+  });
+};
 
 const getBoardByWorkspace = async (boardId, workspaceId) => {
   const board = await Board.findOne({
@@ -183,6 +191,7 @@ const updateBoard = async (req, res) => {
   if (description !== undefined) board.description = description;
 
   await board.save();
+  broadcastBoardEvent(req, 'board:updated', board);
 
   res.status(StatusCodes.OK).json({ board });
 };
@@ -192,6 +201,12 @@ const deleteBoard = async (req, res) => {
 
   await deleteBoardAttachments(board);
   await board.deleteOne();
+  req.app.get('io')?.to(`board:${req.params.boardId}`).emit('board:updated', {
+    boardId: req.params.boardId,
+    board: null,
+    deleted: true,
+    actorId: req.user?.userId?.toString?.(),
+  });
 
   res.status(StatusCodes.OK).json({ msg: 'Board deleted successfully' });
 };
@@ -212,6 +227,7 @@ const addColumn = async (req, res) => {
   });
 
   await board.save();
+  broadcastBoardEvent(req, 'list:created', board);
   res.status(StatusCodes.OK).json({ board });
 };
 
@@ -239,6 +255,7 @@ const addCard = async (req, res) => {
   });
 
   await board.save();
+  broadcastBoardEvent(req, 'card:created', board);
   res.status(StatusCodes.CREATED).json({ board });
 };
 
@@ -258,6 +275,7 @@ const updateColumn = async (req, res) => {
 
   column.title = title;
   await board.save();
+  broadcastBoardEvent(req, 'list:updated', board);
 
   res.status(StatusCodes.OK).json({ board });
 };
@@ -281,6 +299,7 @@ const deleteColumn = async (req, res) => {
   });
 
   await board.save();
+  broadcastBoardEvent(req, 'list:deleted', board);
   res.status(StatusCodes.OK).json({ msg: 'List deleted successfully', board });
 };
 
@@ -316,6 +335,7 @@ const moveColumn = async (req, res) => {
   });
 
   await board.save();
+  broadcastBoardEvent(req, 'list:moved', board);
   res.status(StatusCodes.OK).json({ board });
 };
 
@@ -371,6 +391,7 @@ const updateCard = async (req, res) => {
   }
 
   await board.save();
+  broadcastBoardEvent(req, 'card:updated', board);
   res.status(StatusCodes.OK).json({ board });
 };
 
@@ -390,6 +411,7 @@ const deleteCard = async (req, res) => {
       );
       column.cards.pull(req.params.cardId);
       await board.save();
+      broadcastBoardEvent(req, 'card:deleted', board);
       return res.status(StatusCodes.OK).json({ msg: 'Card deleted successfully', board });
     }
   }
@@ -494,6 +516,7 @@ const moveCard = async (req, res) => {
   normalizeCards(toColumn.cards);
 
   await board.save();
+  broadcastBoardEvent(req, 'card:moved', board);
   res.status(StatusCodes.OK).json({ board });
 };
 

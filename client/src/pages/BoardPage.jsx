@@ -200,7 +200,10 @@ export default function BoardPage() {
             onClick={() => setIsBoardViewersOpen(true)}
             aria-label={`Show ${onlineBoardMemberIds.length} people viewing this board`}
           >
-            <span className="board-viewers-indicator" aria-hidden="true" />
+            <svg className="board-viewers-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M2.5 12s3.4-5.5 9.5-5.5 9.5 5.5 9.5 5.5-3.4 5.5-9.5 5.5S2.5 12 2.5 12Z" />
+              <circle cx="12" cy="12" r="2.5" />
+            </svg>
             {onlineBoardMemberIds.length} viewing
           </button>
           <span className="workspace-badge">Updated {formatDate(board.updatedAt)}</span>

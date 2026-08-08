@@ -18,6 +18,7 @@ import {
   updateList,
   uploadCardAttachment,
 } from '../services/boards';
+import { subscribeToBoardUpdates } from '../services/socket';
 
 const toDateInputValue = (value) => {
   if (!value) return '';
@@ -57,6 +58,19 @@ export default function useBoardPage(workspaceId, boardId) {
     joinBoardPresence(boardId);
     return () => leaveBoardPresence(boardId);
   }, [user, boardId, joinBoardPresence, leaveBoardPresence]);
+
+  useEffect(() => {
+    if (!user || !boardId) return undefined;
+
+    return subscribeToBoardUpdates(boardId, (eventName, payload) => {
+      if (eventName === 'board:updated' && payload.deleted) {
+        navigate(`/workspaces/${workspaceId}`);
+        return;
+      }
+
+      if (payload.board) setBoard(payload.board);
+    });
+  }, [user, boardId, workspaceId, navigate]);
 
   const [board, setBoard] = useState(null);
   const [loading, setLoading] = useState(true);

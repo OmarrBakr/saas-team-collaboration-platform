@@ -610,7 +610,6 @@
     max-height: min(52vh, 30rem);
   }
 
-  .manage-member-row,
   .board-attachment-row {
     align-items: flex-start;
     flex-direction: column;

@@ -53,18 +53,12 @@ export function AuthProvider({ children }) {
 
     const socket = connectSocket();
     const handlePresenceUpdate = ({ workspaceId, userIds }) => {
-      if (import.meta.env.DEV) {
-        console.log('[socket] presence updated', workspaceId, userIds);
-      }
       setPresenceByWorkspace((current) => ({
         ...current,
         [workspaceId]: userIds,
       }));
     };
     const handleBoardPresenceUpdate = ({ boardId, userIds }) => {
-      if (import.meta.env.DEV) {
-        console.log('[socket] board presence updated', boardId, userIds);
-      }
       setPresenceByBoard((current) => ({ ...current, [boardId]: userIds }));
     };
 

@@ -6,9 +6,6 @@ const Workspace = require('../models/Workspace');
 
 const workspacePresence = new Map();
 const boardPresence = new Map();
-const logSocket = (...args) => {
-  if (process.env.NODE_ENV !== 'production') console.log('[socket]', ...args);
-};
 
 const parseCookies = (cookieHeader = '') =>
   cookieHeader.split(';').reduce((cookies, cookie) => {
@@ -95,10 +92,8 @@ const setupSocket = (httpServer) => {
 
       const payload = jwt.verify(token, process.env.JWT_SECRET);
       socket.user = { userId: payload.userId.toString() };
-      logSocket('authenticated', socket.id, socket.user.userId);
       next();
     } catch (error) {
-      logSocket('authentication failed');
       next(new Error('Authentication invalid'));
     }
   });
@@ -106,7 +101,6 @@ const setupSocket = (httpServer) => {
   io.on('connection', (socket) => {
     socket.joinedWorkspaces = new Set();
     socket.joinedBoards = new Set();
-    logSocket('connected', socket.id, socket.user.userId);
 
     socket.on('presence:join-workspace', async (workspaceId, acknowledge) => {
       try {
@@ -121,7 +115,6 @@ const setupSocket = (httpServer) => {
           socket.joinedWorkspaces.add(normalizedWorkspaceId);
           addPresence(normalizedWorkspaceId, socket.user.userId);
           emitPresence(io, normalizedWorkspaceId);
-          logSocket('presence joined', socket.user.userId, normalizedWorkspaceId);
         }
 
         acknowledge?.({
@@ -130,7 +123,6 @@ const setupSocket = (httpServer) => {
           userIds: getPresence(normalizedWorkspaceId),
         });
       } catch (error) {
-        logSocket('presence join rejected', socket.user.userId, workspaceId, error.message);
         acknowledge?.({ ok: false, message: error.message });
       }
     });
@@ -142,7 +134,6 @@ const setupSocket = (httpServer) => {
       socket.joinedWorkspaces.delete(workspaceId);
       removePresence(workspaceId, socket.user.userId);
       emitPresence(io, workspaceId);
-      logSocket('presence left', socket.user.userId, workspaceId);
     };
 
     socket.on('presence:leave-workspace', (workspaceId) => {
@@ -175,7 +166,6 @@ const setupSocket = (httpServer) => {
           socket.joinedBoards.add(normalizedBoardId);
           addBoardPresence(normalizedBoardId, socket.user.userId);
           emitBoardPresence(io, normalizedBoardId);
-          logSocket('board presence joined', socket.user.userId, normalizedBoardId);
         }
 
         acknowledge?.({
@@ -185,7 +175,6 @@ const setupSocket = (httpServer) => {
           userIds: [...(boardPresence.get(normalizedBoardId)?.keys() || [])],
         });
       } catch (error) {
-        logSocket('board presence join rejected', socket.user.userId, boardId, error.message);
         acknowledge?.({ ok: false, message: error.message });
       }
     });
@@ -198,7 +187,6 @@ const setupSocket = (httpServer) => {
       socket.joinedBoards.delete(normalizedBoardId);
       removeBoardPresence(normalizedBoardId, socket.user.userId);
       emitBoardPresence(io, normalizedBoardId);
-      logSocket('board presence left', socket.user.userId, normalizedBoardId);
 
       for (const workspaceId of socket.joinedWorkspaces) {
         leaveWorkspace(workspaceId);
@@ -206,7 +194,6 @@ const setupSocket = (httpServer) => {
     });
 
     socket.on('disconnect', () => {
-      logSocket('disconnected', socket.id, socket.user.userId);
       for (const boardId of socket.joinedBoards) {
         removeBoardPresence(boardId, socket.user.userId);
         emitBoardPresence(io, boardId);
@@ -223,4 +210,15 @@ const setupSocket = (httpServer) => {
   return io;
 };
 
+const emitBoardEvent = (io, eventName, board, payload = {}) => {
+  if (!io || !board?._id) return;
+
+  io.to(`board:${board._id}`).emit(eventName, {
+    boardId: board._id.toString(),
+    board,
+    ...payload,
+  });
+};
+
 module.exports = setupSocket;
+module.exports.emitBoardEvent = emitBoardEvent;
