@@ -186,7 +186,7 @@ export default function BoardPage() {
             <p className="dashboard-kicker">Board</p>
             <h1>{board.name}</h1>
             <p className="dashboard-intro">
-              {board.description || 'Board details, lists, and cards in one place.'}
+              {board.description}
             </p>
           </div>
         </div>
@@ -464,6 +464,7 @@ export default function BoardPage() {
         onRemoveLabel={removeCardLabel}
         hasChanges={hasCardDetailChanges}
         onOpenAssignees={openCardAssigneesModal}
+        isAdmin={isAdmin}
       />
 
       <CardAssigneesModal

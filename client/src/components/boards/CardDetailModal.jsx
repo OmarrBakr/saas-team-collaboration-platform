@@ -19,6 +19,7 @@ export default function CardDetailModal({
   onRemoveLabel,
   hasChanges,
   onOpenAssignees,
+  isAdmin,
 }) {
   if (!isOpen) return null;
 
@@ -63,18 +64,18 @@ export default function CardDetailModal({
               <span>
                 Title <strong className="field-required">*</strong>
               </span>
-              <input name="title" value={form.title} onChange={onChange} required />
+            <input name="title" value={form.title} onChange={onChange} required readOnly={!isAdmin} />
             </label>
 
             <label>
               <span>Description</span>
-              <textarea name="description" value={form.description} onChange={onChange} rows="4" />
+              <textarea name="description" value={form.description} onChange={onChange} rows="4" readOnly={!isAdmin} />
             </label>
 
             <div className="board-detail-grid">
               <label>
                 <span>Priority</span>
-                <select name="priority" className="manage-role-select" value={form.priority} onChange={onChange}>
+                <select name="priority" className="manage-role-select" value={form.priority} onChange={onChange} disabled={!isAdmin}>
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
@@ -83,16 +84,18 @@ export default function CardDetailModal({
 
               <label>
                 <span>Due date</span>
-                <input type="date" name="dueDate" value={form.dueDate} onChange={onChange} />
+                <input type="date" name="dueDate" value={form.dueDate} onChange={onChange} disabled={!isAdmin} />
               </label>
             </div>
 
             <div className="card-assignee-field">
               <span className="card-assignee-label">
                 <span>Assignees</span>
-                <button type="button" className="card-assignee-open-btn" onClick={onOpenAssignees}>
-                  Assign members
-                </button>
+                {isAdmin && (
+                  <button type="button" className="card-assignee-open-btn" onClick={onOpenAssignees}>
+                    Assign members
+                  </button>
+                )}
               </span>
               <div className="card-assignee-chip-list">
                 {workspaceMembers
@@ -124,42 +127,54 @@ export default function CardDetailModal({
               <div className="card-label-chip-list">
                 {form.labels.length ? (
                   form.labels.map((label, index) => (
-                    <button
-                      key={`${label.title}-${label.color}-${index}`}
-                      type="button"
-                      className="card-label-chip"
-                      style={{ backgroundColor: label.color || '#9fb6ff' }}
-                      onClick={() => onRemoveLabel(index)}
-                      title="Remove label"
-                    >
-                      <span>{label.title}</span>
-                      <span aria-hidden="true">&times;</span>
-                    </button>
+                    isAdmin ? (
+                      <button
+                        key={`${label.title}-${label.color}-${index}`}
+                        type="button"
+                        className="card-label-chip"
+                        style={{ backgroundColor: label.color || '#9fb6ff' }}
+                        onClick={() => onRemoveLabel(index)}
+                        title="Remove label"
+                      >
+                        <span>{label.title}</span>
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    ) : (
+                      <span
+                        key={`${label.title}-${label.color}-${index}`}
+                        className="card-label-chip"
+                        style={{ backgroundColor: label.color || '#9fb6ff' }}
+                      >
+                        {label.title}
+                      </span>
+                    )
                   ))
                 ) : (
                   <p className="empty-state">No labels yet.</p>
                 )}
               </div>
 
-              <div className="card-label-draft">
-                <input
-                  name="title"
-                  value={labelDraft.title}
-                  onChange={onLabelDraftChange}
-                  placeholder="Label title"
-                />
-                <div className="card-label-draft-actions">
+              {isAdmin && (
+                <div className="card-label-draft">
                   <input
-                    name="color"
-                    type="color"
-                    value={labelDraft.color}
+                    name="title"
+                    value={labelDraft.title}
                     onChange={onLabelDraftChange}
+                    placeholder="Label title"
                   />
-                  <button type="button" className="secondary-btn card-label-add-btn" onClick={onAddLabel}>
-                    Add label
-                  </button>
+                  <div className="card-label-draft-actions">
+                    <input
+                      name="color"
+                      type="color"
+                      value={labelDraft.color}
+                      onChange={onLabelDraftChange}
+                    />
+                    <button type="button" className="secondary-btn card-label-add-btn" onClick={onAddLabel}>
+                      Add label
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </section>
 
             <section className="board-attachment-box">
@@ -174,14 +189,16 @@ export default function CardDetailModal({
                       <a href={attachment.url} target="_blank" rel="noreferrer">
                         {attachment.title}
                       </a>
-                      <button
-                        type="button"
-                        className="secondary-btn"
-                        onClick={() => onDeleteAttachment(attachment._id)}
-                        disabled={isSubmitting}
-                      >
-                        Remove
-                      </button>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          className="secondary-btn"
+                          onClick={() => onDeleteAttachment(attachment._id)}
+                          disabled={isSubmitting}
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -189,10 +206,12 @@ export default function CardDetailModal({
                 <p className="empty-state">No attachments yet.</p>
               )}
 
-              <label>
-                <span>Upload attachment</span>
-                <input type="file" onChange={onAttachmentUpload} disabled={isUploadingAttachment} />
-              </label>
+              {isAdmin && (
+                <label>
+                  <span>Upload attachment</span>
+                  <input type="file" onChange={onAttachmentUpload} disabled={isUploadingAttachment} />
+                </label>
+              )}
 
               {attachmentError && <div className="dashboard-alert">{attachmentError}</div>}
             </section>
@@ -201,21 +220,25 @@ export default function CardDetailModal({
           {error && <div className="dashboard-alert card-detail-error">{error}</div>}
 
           <div className="modal-actions modal-actions--space-between card-detail-footer">
-            <button type="button" className="workspace-delete-btn" onClick={onDeleteCard} disabled={isSubmitting}>
-              Delete card
-            </button>
+            {isAdmin && (
+              <button type="button" className="workspace-delete-btn" onClick={onDeleteCard} disabled={isSubmitting}>
+                Delete card
+              </button>
+            )}
 
             <div className="modal-actions">
               <button type="button" className="secondary-btn" onClick={onClose} disabled={isSubmitting}>
                 Cancel
               </button>
-              <button
-                type="submit"
-                className="primary-btn"
-                disabled={isSubmitting || !form.title.trim() || !onSubmit || !hasChanges}
-              >
-                {isSubmitting ? 'Saving...' : 'Save changes'}
-              </button>
+              {isAdmin && (
+                <button
+                  type="submit"
+                  className="primary-btn"
+                  disabled={isSubmitting || !form.title.trim() || !onSubmit || !hasChanges}
+                >
+                  {isSubmitting ? 'Saving...' : 'Save changes'}
+                </button>
+              )}
             </div>
           </div>
         </form>

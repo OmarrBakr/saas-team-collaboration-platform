@@ -175,11 +175,13 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .card-label-section {
   display: grid;
   gap: 0.9rem;
+  margin-bottom: 0.5rem;
 }
 
 .card-label-chip-list {
@@ -311,6 +313,7 @@
 .card-assignee-chip-list {
   display: grid;
   gap: 0.65rem;
+  margin-bottom: 0.5rem;
 }
 
 .card-assignee-text {

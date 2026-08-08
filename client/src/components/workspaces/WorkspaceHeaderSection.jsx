@@ -60,7 +60,7 @@ export default function WorkspaceHeaderSection({
         <div>
           <p className="dashboard-kicker">{workspace.isPersonal ? 'Personal workspace' : 'Team workspace'}</p>
           <h1>{workspace.name}</h1>
-          <p className="dashboard-intro">{workspace.description || 'Workspace overview, boards, and members in one place.'}</p>
+          <p className="dashboard-intro">{workspace.description}</p>
         </div>
       </div>
     </header>
