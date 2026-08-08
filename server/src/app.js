@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 require('dotenv').config();
 require('express-async-errors');
 const cookieParser = require('cookie-parser');
@@ -21,6 +22,7 @@ const boardRouter = require('./routes/board');
 const notFoundMiddleware = require('./middleware/not-found');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const authenticationMiddleware = require('./middleware/authentication');
+const setupSocket = require('./realtime/socket');
 
 // routes
 app.use('/api/v1/auth', authRouter);
@@ -35,7 +37,10 @@ app.use(errorHandlerMiddleware);
 const startServer = async () => {
   await connectDB();
 
-  app.listen(port, () => {
+  const httpServer = http.createServer(app);
+  setupSocket(httpServer);
+
+  httpServer.listen(port, () => {
     console.log(`Server listening on port ${port}`);
   });
 };

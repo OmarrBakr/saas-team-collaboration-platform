@@ -22,6 +22,7 @@ export default function WorkspacePage() {
     workspace,
     boards,
     members,
+    onlineMemberIds,
     invitations,
     loading,
     error,
@@ -126,6 +127,7 @@ export default function WorkspacePage() {
         />
         <WorkspaceMembersSection
           members={members}
+          onlineMemberIds={onlineMemberIds}
           invitations={invitations}
           isAdmin={isAdmin}
           onManage={openManageModal}

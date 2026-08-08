@@ -16,8 +16,20 @@ import {
 
 export default function useWorkspacePage(workspaceId, options = {}) {
   const { includeBoards = true } = options;
-  const { user } = useAuth();
+  const {
+    user,
+    presenceByWorkspace,
+    joinWorkspacePresence,
+    leaveWorkspacePresence,
+  } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user || !workspaceId) return undefined;
+
+    joinWorkspacePresence(workspaceId);
+    return () => leaveWorkspacePresence(workspaceId);
+  }, [user, workspaceId, joinWorkspacePresence, leaveWorkspacePresence]);
 
   const [workspace, setWorkspace] = useState(null);
   const [boards, setBoards] = useState([]);
@@ -350,6 +362,7 @@ export default function useWorkspacePage(workspaceId, options = {}) {
     workspace,
     boards,
     members,
+    onlineMemberIds: presenceByWorkspace[workspaceId] || [],
     invitations,
     loading,
     error,

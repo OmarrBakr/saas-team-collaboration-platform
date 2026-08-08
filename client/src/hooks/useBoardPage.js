@@ -43,8 +43,20 @@ const reorderColumns = (columns, fromIndex, toIndex) => {
 };
 
 export default function useBoardPage(workspaceId, boardId) {
-  const { user } = useAuth();
+  const {
+    user,
+    presenceByBoard,
+    joinBoardPresence,
+    leaveBoardPresence,
+  } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user || !boardId) return undefined;
+
+    joinBoardPresence(boardId);
+    return () => leaveBoardPresence(boardId);
+  }, [user, boardId, joinBoardPresence, leaveBoardPresence]);
 
   const [board, setBoard] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -87,6 +99,7 @@ export default function useBoardPage(workspaceId, boardId) {
   const [isCardDetailOpen, setIsCardDetailOpen] = useState(false);
   const [isCardAssigneesOpen, setIsCardAssigneesOpen] = useState(false);
   const [isCardDeletingOpen, setIsCardDeletingOpen] = useState(false);
+  const [isBoardViewersOpen, setIsBoardViewersOpen] = useState(false);
   const [isCardDeleted, setIsCardDeleted] = useState(false);
   const [activeList, setActiveList] = useState(null);
   const [activeCard, setActiveCard] = useState(null);
@@ -1039,6 +1052,7 @@ export default function useBoardPage(workspaceId, boardId) {
     error,
     isAdmin,
     workspaceMembers,
+    onlineBoardMemberIds: presenceByBoard[boardId] || [],
     isEditOpen,
     isDeletingOpen,
     isEditingBoard,
@@ -1061,6 +1075,7 @@ export default function useBoardPage(workspaceId, boardId) {
     isCardDetailOpen,
     isCardAssigneesOpen,
     isCardDeletingOpen,
+    isBoardViewersOpen,
     isAssigneeMenuOpen,
     cardAssigneeDraft,
     activeList,
@@ -1134,6 +1149,7 @@ export default function useBoardPage(workspaceId, boardId) {
     setIsCardOpen,
     setIsCardDetailOpen,
     setIsCardDeletingOpen,
+    setIsBoardViewersOpen,
     setIsAssigneeMenuOpen,
   };
 }

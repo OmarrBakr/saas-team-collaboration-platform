@@ -339,6 +339,21 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.member-presence-dot {
+  flex: 0 0 auto;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-top: 0.2rem;
+  border-radius: 50%;
+  background: rgba(170, 182, 204, 0.55);
+  box-shadow: 0 0 0 3px rgba(170, 182, 204, 0.08);
+}
+
+.member-presence-dot--online {
+  background: #42d889;
+  box-shadow: 0 0 0 3px rgba(66, 216, 137, 0.12);
+}
+
 .member-item-actions {
   display: flex;
   align-items: center;

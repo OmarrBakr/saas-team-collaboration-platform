@@ -10,6 +10,7 @@ import CardCreateModal from '../components/boards/CardCreateModal';
 import CardDetailModal from '../components/boards/CardDetailModal';
 import CardAssigneesModal from '../components/boards/CardAssigneesModal';
 import CardDangerModal from '../components/boards/CardDangerModal';
+import BoardViewersModal from '../components/boards/BoardViewersModal';
 import '../styles/dashboard.css';
 import '../styles/workspace.css';
 import '../styles/board.css';
@@ -58,6 +59,7 @@ export default function BoardPage() {
     isCardDetailOpen,
     isCardAssigneesOpen,
     isCardDeletingOpen,
+    isBoardViewersOpen,
     isAssigneeMenuOpen,
     activeList,
     activeCard,
@@ -77,6 +79,7 @@ export default function BoardPage() {
     hasBoardEditChanges,
     hasCardDetailChanges,
     workspaceMembers,
+    onlineBoardMemberIds,
     openEditModal,
     handleEditChange,
     handleEditSubmit,
@@ -131,6 +134,7 @@ export default function BoardPage() {
     toggleCardAssigneeDraft,
     saveCardAssignees,
     setIsCardDeletingOpen,
+    setIsBoardViewersOpen,
   } = useBoardPage(workspaceId, boardId);
 
   if (loading) {
@@ -190,6 +194,15 @@ export default function BoardPage() {
         <div className="board-meta-row">
           <span className="workspace-badge">{board.columns?.length || 0} lists</span>
           <span className="workspace-badge">{board.columns?.reduce((count, column) => count + (column.cards?.length || 0), 0) || 0} cards</span>
+          <button
+            type="button"
+            className="workspace-badge board-viewers-badge"
+            onClick={() => setIsBoardViewersOpen(true)}
+            aria-label={`Show ${onlineBoardMemberIds.length} people viewing this board`}
+          >
+            <span className="board-viewers-indicator" aria-hidden="true" />
+            {onlineBoardMemberIds.length} viewing
+          </button>
           <span className="workspace-badge">Updated {formatDate(board.updatedAt)}</span>
         </div>
       </header>
@@ -467,6 +480,13 @@ export default function BoardPage() {
         cardTitle={activeCard?.title}
         onClose={() => setIsCardDeletingOpen(false)}
         onConfirm={confirmDeleteCard}
+      />
+
+      <BoardViewersModal
+        isOpen={isBoardViewersOpen}
+        members={workspaceMembers}
+        onlineMemberIds={onlineBoardMemberIds}
+        onClose={() => setIsBoardViewersOpen(false)}
       />
     </main>
   );

@@ -1,5 +1,6 @@
 export default function WorkspaceMembersSection({
   members,
+  onlineMemberIds,
   invitations,
   isAdmin,
   onManage,
@@ -30,6 +31,18 @@ export default function WorkspaceMembersSection({
         <div className="member-list">
           {members.map((member) => (
             <div key={member.user?._id || member.user?.id || member.user} className="member-item">
+              {(() => {
+                const memberId = (member.user?._id || member.user?.id || member.user)?.toString?.();
+                const isOnline = onlineMemberIds.includes(memberId);
+
+                return (
+                  <span
+                    className={`member-presence-dot${isOnline ? ' member-presence-dot--online' : ''}`}
+                    title={isOnline ? 'Online in this workspace' : 'Offline'}
+                    aria-label={isOnline ? 'Online in this workspace' : 'Offline'}
+                  />
+                );
+              })()}
               <div>
                 <strong>
                   {member.user?.firstName || member.user?.lastName

@@ -2,6 +2,14 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { getCurrentUser } from '../services/auth';
+import {
+  connectSocket,
+  disconnectSocket,
+  joinBoardPresence,
+  joinWorkspacePresence,
+  leaveBoardPresence,
+  leaveWorkspacePresence,
+} from '../services/socket';
 
 const AuthContext = createContext(null);
 
@@ -17,6 +25,8 @@ const isPublicTokenPage = (pathname) =>
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [presenceByWorkspace, setPresenceByWorkspace] = useState({});
+  const [presenceByBoard, setPresenceByBoard] = useState({});
   const location = useLocation();
   const initialPathname = location.pathname;
 
@@ -33,8 +43,57 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!user) {
+      disconnectSocket();
+      setPresenceByWorkspace({});
+      setPresenceByBoard({});
+      return undefined;
+    }
+
+    const socket = connectSocket();
+    const handlePresenceUpdate = ({ workspaceId, userIds }) => {
+      if (import.meta.env.DEV) {
+        console.log('[socket] presence updated', workspaceId, userIds);
+      }
+      setPresenceByWorkspace((current) => ({
+        ...current,
+        [workspaceId]: userIds,
+      }));
+    };
+    const handleBoardPresenceUpdate = ({ boardId, userIds }) => {
+      if (import.meta.env.DEV) {
+        console.log('[socket] board presence updated', boardId, userIds);
+      }
+      setPresenceByBoard((current) => ({ ...current, [boardId]: userIds }));
+    };
+
+    socket.on('presence:updated', handlePresenceUpdate);
+    socket.on('board:presence:updated', handleBoardPresenceUpdate);
+
+    return () => {
+      socket.off('presence:updated', handlePresenceUpdate);
+      socket.off('board:presence:updated', handleBoardPresenceUpdate);
+      disconnectSocket();
+      setPresenceByWorkspace({});
+      setPresenceByBoard({});
+    };
+  }, [user]);
+
   return (
-    <AuthContext.Provider value={{ user, setUser, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser,
+        loading,
+        presenceByWorkspace,
+        presenceByBoard,
+        joinBoardPresence,
+        joinWorkspacePresence,
+        leaveBoardPresence,
+        leaveWorkspacePresence,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
