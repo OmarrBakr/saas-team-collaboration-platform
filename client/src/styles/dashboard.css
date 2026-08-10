@@ -387,6 +387,7 @@
 }
 
 .notifications-trigger {
+  position: relative;
   width: 2.8rem;
   height: 2.8rem;
   display: grid;
@@ -415,6 +416,23 @@
   stroke-width: 1.7;
 }
 
+.notifications-count {
+  position: absolute;
+  top: -0.15rem;
+  right: -0.15rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  display: grid;
+  place-items: center;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: #ff6b7a;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .notifications-panel {
   position: absolute;
   top: calc(100% + 0.75rem);
@@ -428,8 +446,57 @@
 }
 
 .notifications-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   padding: 0.2rem 0.2rem 0.75rem;
   border-bottom: 1px solid rgba(155, 175, 255, 0.12);
+}
+
+.notifications-panel-head button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.notifications-list {
+  display: grid;
+  gap: 0.35rem;
+  max-height: min(60vh, 24rem);
+  overflow-y: auto;
+  padding-top: 0.5rem;
+}
+
+.notification-item {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification-item:hover,
+.notification-item:focus-visible {
+  background: rgba(119, 166, 255, 0.1);
+  outline: none;
+}
+
+.notification-item small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.notification-item--unread {
+  background: rgba(119, 166, 255, 0.08);
 }
 
 .notifications-empty {

@@ -17,6 +17,7 @@ const authRouter = require('./routes/auth');
 const userRouter = require('./routes/user');
 const workspaceRouter = require('./routes/workspace');
 const boardRouter = require('./routes/board');
+const notificationRouter = require('./routes/notifications');
 
 // middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -29,6 +30,7 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', authenticationMiddleware, userRouter);
 app.use('/api/v1/workspaces', authenticationMiddleware, workspaceRouter);
 app.use('/api/v1/workspaces/:workspaceId/boards', authenticationMiddleware, boardRouter);
+app.use('/api/v1/notifications', authenticationMiddleware, notificationRouter);
 
 //error handler
 app.use(notFoundMiddleware);

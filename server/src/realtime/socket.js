@@ -101,6 +101,7 @@ const setupSocket = (httpServer) => {
   io.on('connection', (socket) => {
     socket.joinedWorkspaces = new Set();
     socket.joinedBoards = new Set();
+    socket.join(`user:${socket.user.userId}`);
 
     socket.on('presence:join-workspace', async (workspaceId, acknowledge) => {
       try {

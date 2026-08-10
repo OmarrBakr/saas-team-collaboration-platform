@@ -10,6 +10,7 @@ const {
   deleteCardAttachment: cloudinaryDeleteCardAttachment,
 } = require('../utils/cloudinary');
 const { emitBoardEvent } = require('../realtime/socket');
+const { createCardAssignmentNotifications } = require('../services/notifications');
 
 const broadcastBoardEvent = (req, eventName, board, payload) => {
   emitBoardEvent(req.app.get('io'), eventName, board, {
@@ -361,6 +362,7 @@ const updateCard = async (req, res) => {
   }
 
   const board = await getBoardByWorkspace(req.params.boardId, req.workspace._id);
+  const previousAssigneeIds = [];
   let sourceColumn;
   let card;
 
@@ -377,6 +379,8 @@ const updateCard = async (req, res) => {
     throw new NotFoundError('Card not found');
   }
 
+  previousAssigneeIds.push(...card.assignees);
+
   if (title !== undefined) card.title = title;
   if (description !== undefined) card.description = description;
   if (dueDate !== undefined) card.dueDate = dueDate;
@@ -391,6 +395,16 @@ const updateCard = async (req, res) => {
   }
 
   await board.save();
+  if (assignees !== undefined) {
+    await createCardAssignmentNotifications({
+      io: req.app.get('io'),
+      actorId: req.user.userId,
+      workspaceId: req.workspace._id,
+      boardId: board._id,
+      card,
+      previousAssigneeIds,
+    });
+  }
   broadcastBoardEvent(req, 'card:updated', board);
   res.status(StatusCodes.OK).json({ board });
 };
