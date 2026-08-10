@@ -21,6 +21,9 @@ const NotificationSchema = new mongoose.Schema(
         'card_moved',
         'card_updated',
         'card_deleted',
+        'workspace_invited',
+        'workspace_invitation_accepted',
+        'workspace_member_removed',
       ],
       required: true,
     },
@@ -32,15 +35,12 @@ const NotificationSchema = new mongoose.Schema(
     board: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Board',
-      required: true,
     },
     card: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
     },
     cardTitle: {
       type: String,
-      required: true,
     },
     message: {
       type: String,

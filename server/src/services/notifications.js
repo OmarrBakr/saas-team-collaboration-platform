@@ -81,7 +81,31 @@ const createCardActivityNotifications = async ({
   }
 };
 
+const createWorkspaceNotifications = async ({
+  io,
+  actorId,
+  workspaceId,
+  type,
+  notifications,
+}) => {
+  for (const { recipientId, message } of notifications) {
+    if (recipientId.toString() === actorId.toString()) continue;
+
+    const notification = await Notification.create({
+      recipient: recipientId,
+      actor: actorId,
+      type,
+      workspace: workspaceId,
+      message,
+    });
+
+    await notification.populate('actor', 'firstName lastName email');
+    io?.to(`user:${notification.recipient}`).emit('notification:new', notification);
+  }
+};
+
 module.exports = {
   createCardAssignmentNotifications,
   createCardActivityNotifications,
+  createWorkspaceNotifications,
 };

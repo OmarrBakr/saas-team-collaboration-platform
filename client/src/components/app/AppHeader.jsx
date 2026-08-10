@@ -20,6 +20,11 @@ export default function AppHeader() {
     setOpenMenu('');
     if (notification.workspace && notification.board) {
       navigate(`/workspaces/${notification.workspace}/boards/${notification.board}`);
+    } else if (
+      notification.workspace &&
+      notification.type !== 'workspace_invited'
+    ) {
+      navigate(`/workspaces/${notification.workspace}`);
     }
   };
 

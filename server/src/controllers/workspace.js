@@ -15,6 +15,7 @@ const {
   uploadWorkspaceLogo: cloudinaryUploadLogo,
   deleteWorkspaceLogo: cloudinaryDeleteLogo,
 } = require('../utils/cloudinary');
+const { createWorkspaceNotifications } = require('../services/notifications');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -266,11 +267,41 @@ const removeMember = async (req, res) => {
     throw new UnauthorizedError('Members do not have permission to remove other members');
   }
 
+  const targetUser = await User.findById(targetUserId).select('firstName lastName email');
+  const targetUserName = targetUser
+    ? `${targetUser.firstName} ${targetUser.lastName}`.trim() || targetUser.email
+    : 'A member';
+  const remainingAdmins = workspace.members
+    .filter(
+      (member) =>
+        member.role === 'admin' &&
+        member.user.toString() !== requestingUserId.toString() &&
+        member.user.toString() !== targetUserId.toString()
+    )
+    .map((member) => ({
+      recipientId: member.user,
+      message: `${targetUserName} was removed from workspace "${workspace.name}".`,
+    }));
+
   workspace.members = workspace.members.filter(
     (m) => m.user.toString() !== targetUserId
   );
 
   await workspace.save();
+
+  await createWorkspaceNotifications({
+    io: req.app.get('io'),
+    actorId: requestingUserId,
+    workspaceId: workspace._id,
+    type: 'workspace_member_removed',
+    notifications: [
+      {
+        recipientId: targetUserId,
+        message: `You were removed from workspace "${workspace.name}".`,
+      },
+      ...remainingAdmins,
+    ],
+  });
 
   res.status(StatusCodes.OK).json({ msg: 'Member removed from workspace' });
 };
@@ -384,6 +415,27 @@ const inviteMember = async (req, res) => {
     origin: process.env.CLIENT_ORIGIN,
   });
 
+  const otherAdmins = workspace.members
+    .filter((member) => member.role === 'admin' && member.user.toString() !== userId.toString())
+    .map((member) => ({
+      recipientId: member.user,
+      message: `${inviterName} invited ${existingUser.firstName} to workspace "${workspace.name}".`,
+    }));
+
+  await createWorkspaceNotifications({
+    io: req.app.get('io'),
+    actorId: userId,
+    workspaceId: workspace._id,
+    type: 'workspace_invited',
+    notifications: [
+      {
+        recipientId: existingUser._id,
+        message: `You were invited to workspace "${workspace.name}". Check your email to accept the invitation.`,
+      },
+      ...otherAdmins,
+    ],
+  });
+
   res.status(StatusCodes.OK).json({
     msg: `Invitation sent to ${normalizedEmail}`,
     expiresAt,
@@ -422,7 +474,7 @@ const acceptInvitation = async (req, res) => {
   }
 
   // Make sure the logged-in user's email matches the invitation
-  const invitedUser = await User.findById(userId).select('email');
+  const invitedUser = await User.findById(userId).select('firstName lastName email');
   if (!invitedUser || invitedUser.email !== email.toLowerCase()) {
     throw new UnauthorizedError(
       'The invitation was sent to a different email address than your account'
@@ -434,9 +486,9 @@ const acceptInvitation = async (req, res) => {
     throw new BadRequestError('You are already a member of this workspace');
   }
 
-  const invitation = workspace.invitations.find(
-    (inv) => inv.email === email.toLowerCase() && inv.token === hashedToken
-  );
+  const workspaceAdmins = workspace.members
+    .filter((member) => member.role === 'admin')
+    .map((member) => member.user);
 
   // Add user as a member
   workspace.members.push({
@@ -451,6 +503,18 @@ const acceptInvitation = async (req, res) => {
   );
 
   await workspace.save();
+
+  const invitedUserName = `${invitedUser.firstName} ${invitedUser.lastName}`.trim() || invitedUser.email;
+  await createWorkspaceNotifications({
+    io: req.app.get('io'),
+    actorId: userId,
+    workspaceId: workspace._id,
+    type: 'workspace_invitation_accepted',
+    notifications: workspaceAdmins.map((recipientId) => ({
+      recipientId,
+      message: `${invitedUserName} accepted an invitation to workspace "${workspace.name}".`,
+    })),
+  });
 
   res.status(StatusCodes.OK).json({
     msg: `You have joined "${workspace.name}"`,
