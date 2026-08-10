@@ -4,7 +4,7 @@ const { Server } = require('socket.io');
 const Board = require('../models/Board');
 const Workspace = require('../models/Workspace');
 
-const workspacePresence = new Map();
+const globalPresence = new Map();
 const boardPresence = new Map();
 
 const parseCookies = (cookieHeader = '') =>
@@ -18,14 +18,9 @@ const parseCookies = (cookieHeader = '') =>
     return cookies;
   }, {});
 
-const getPresence = (workspaceId) => [
-  ...(workspacePresence.get(workspaceId)?.keys() || []),
-];
-
-const emitPresence = (io, workspaceId) => {
-  io.to(`workspace:${workspaceId}`).emit('presence:updated', {
-    workspaceId,
-    userIds: getPresence(workspaceId),
+const emitGlobalPresence = (io) => {
+  io.emit('presence:global:updated', {
+    userIds: [...globalPresence.keys()],
   });
 };
 
@@ -36,27 +31,17 @@ const emitBoardPresence = (io, boardId) => {
   });
 };
 
-const addPresence = (workspaceId, userId) => {
-  if (!workspacePresence.has(workspaceId)) {
-    workspacePresence.set(workspaceId, new Map());
-  }
-
-  const users = workspacePresence.get(workspaceId);
-  users.set(userId, (users.get(userId) || 0) + 1);
+const addGlobalPresence = (userId) => {
+  globalPresence.set(userId, (globalPresence.get(userId) || 0) + 1);
 };
 
-const removePresence = (workspaceId, userId) => {
-  const users = workspacePresence.get(workspaceId);
-  if (!users) return;
-
-  const connectionCount = (users.get(userId) || 0) - 1;
+const removeGlobalPresence = (userId) => {
+  const connectionCount = (globalPresence.get(userId) || 0) - 1;
   if (connectionCount > 0) {
-    users.set(userId, connectionCount);
+    globalPresence.set(userId, connectionCount);
   } else {
-    users.delete(userId);
+    globalPresence.delete(userId);
   }
-
-  if (!users.size) workspacePresence.delete(workspaceId);
 };
 
 const addBoardPresence = (boardId, userId) => {
@@ -102,6 +87,8 @@ const setupSocket = (httpServer) => {
     socket.joinedWorkspaces = new Set();
     socket.joinedBoards = new Set();
     socket.join(`user:${socket.user.userId}`);
+    addGlobalPresence(socket.user.userId);
+    emitGlobalPresence(io);
 
     socket.on('presence:join-workspace', async (workspaceId, acknowledge) => {
       try {
@@ -114,14 +101,11 @@ const setupSocket = (httpServer) => {
         if (!socket.joinedWorkspaces.has(normalizedWorkspaceId)) {
           socket.join(`workspace:${normalizedWorkspaceId}`);
           socket.joinedWorkspaces.add(normalizedWorkspaceId);
-          addPresence(normalizedWorkspaceId, socket.user.userId);
-          emitPresence(io, normalizedWorkspaceId);
         }
 
         acknowledge?.({
           ok: true,
           workspaceId: normalizedWorkspaceId,
-          userIds: getPresence(normalizedWorkspaceId),
         });
       } catch (error) {
         acknowledge?.({ ok: false, message: error.message });
@@ -133,8 +117,6 @@ const setupSocket = (httpServer) => {
 
       socket.leave(`workspace:${workspaceId}`);
       socket.joinedWorkspaces.delete(workspaceId);
-      removePresence(workspaceId, socket.user.userId);
-      emitPresence(io, workspaceId);
     };
 
     socket.on('presence:leave-workspace', (workspaceId) => {
@@ -158,8 +140,6 @@ const setupSocket = (httpServer) => {
         if (!socket.joinedWorkspaces.has(normalizedWorkspaceId)) {
           socket.join(`workspace:${normalizedWorkspaceId}`);
           socket.joinedWorkspaces.add(normalizedWorkspaceId);
-          addPresence(normalizedWorkspaceId, socket.user.userId);
-          emitPresence(io, normalizedWorkspaceId);
         }
 
         if (!socket.joinedBoards.has(normalizedBoardId)) {
@@ -195,13 +175,11 @@ const setupSocket = (httpServer) => {
     });
 
     socket.on('disconnect', () => {
+      removeGlobalPresence(socket.user.userId);
+      emitGlobalPresence(io);
       for (const boardId of socket.joinedBoards) {
         removeBoardPresence(boardId, socket.user.userId);
         emitBoardPresence(io, boardId);
-      }
-      for (const workspaceId of socket.joinedWorkspaces) {
-        removePresence(workspaceId, socket.user.userId);
-        emitPresence(io, workspaceId);
       }
       socket.joinedWorkspaces.clear();
       socket.joinedBoards.clear();

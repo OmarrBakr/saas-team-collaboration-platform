@@ -21,14 +21,6 @@ export const disconnectSocket = () => {
 
 export const getSocket = () => socket;
 
-export const joinWorkspacePresence = (workspaceId) => {
-  socket?.emit('presence:join-workspace', workspaceId);
-};
-
-export const leaveWorkspacePresence = (workspaceId) => {
-  socket?.emit('presence:leave-workspace', workspaceId);
-};
-
 export const joinBoardPresence = (boardId) => {
   socket?.emit('presence:join-board', boardId);
 };

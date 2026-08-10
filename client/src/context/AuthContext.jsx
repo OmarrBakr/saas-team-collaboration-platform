@@ -11,9 +11,7 @@ import {
   connectSocket,
   disconnectSocket,
   joinBoardPresence,
-  joinWorkspacePresence,
   leaveBoardPresence,
-  leaveWorkspacePresence,
 } from '../services/socket';
 
 const AuthContext = createContext(null);
@@ -30,7 +28,7 @@ const isPublicTokenPage = (pathname) =>
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [presenceByWorkspace, setPresenceByWorkspace] = useState({});
+  const [onlineUserIds, setOnlineUserIds] = useState([]);
   const [presenceByBoard, setPresenceByBoard] = useState({});
   const [notifications, setNotifications] = useState([]);
   const location = useLocation();
@@ -52,19 +50,14 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!user) {
       disconnectSocket();
-      setPresenceByWorkspace({});
+      setOnlineUserIds([]);
       setPresenceByBoard({});
       setNotifications([]);
       return undefined;
     }
 
     const socket = connectSocket();
-    const handlePresenceUpdate = ({ workspaceId, userIds }) => {
-      setPresenceByWorkspace((current) => ({
-        ...current,
-        [workspaceId]: userIds,
-      }));
-    };
+    const handleGlobalPresenceUpdate = ({ userIds }) => setOnlineUserIds(userIds || []);
     const handleBoardPresenceUpdate = ({ boardId, userIds }) => {
       setPresenceByBoard((current) => ({ ...current, [boardId]: userIds }));
     };
@@ -72,7 +65,7 @@ export function AuthProvider({ children }) {
       setNotifications((current) => [notification, ...current].slice(0, 50));
     };
 
-    socket.on('presence:updated', handlePresenceUpdate);
+    socket.on('presence:global:updated', handleGlobalPresenceUpdate);
     socket.on('board:presence:updated', handleBoardPresenceUpdate);
     socket.on('notification:new', handleNewNotification);
 
@@ -81,11 +74,11 @@ export function AuthProvider({ children }) {
       .catch(() => setNotifications([]));
 
     return () => {
-      socket.off('presence:updated', handlePresenceUpdate);
+      socket.off('presence:global:updated', handleGlobalPresenceUpdate);
       socket.off('board:presence:updated', handleBoardPresenceUpdate);
       socket.off('notification:new', handleNewNotification);
       disconnectSocket();
-      setPresenceByWorkspace({});
+      setOnlineUserIds([]);
       setPresenceByBoard({});
       setNotifications([]);
     };
@@ -116,15 +109,13 @@ export function AuthProvider({ children }) {
         user,
         setUser,
         loading,
-        presenceByWorkspace,
+        onlineUserIds,
         presenceByBoard,
         notifications,
         markNotificationRead,
         markAllNotificationsRead,
         joinBoardPresence,
-        joinWorkspacePresence,
         leaveBoardPresence,
-        leaveWorkspacePresence,
       }}
     >
       {children}
