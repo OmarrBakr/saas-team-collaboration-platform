@@ -10,10 +10,9 @@ function initialsFromUser(user) {
   return `${first}${last}`.trim() || 'U';
 }
 
-export default function UserMenu() {
+export default function UserMenu({ open = false, onToggle = () => {} }) {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
@@ -25,7 +24,7 @@ export default function UserMenu() {
       // If the request fails, still clear the local session state.
     } finally {
       setUser(null);
-      setOpen(false);
+      onToggle(false);
       setIsSigningOut(false);
       navigate('/login', { replace: true });
     }
@@ -36,7 +35,7 @@ export default function UserMenu() {
       <button
         type="button"
         className="user-trigger"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => onToggle(!open)}
         aria-expanded={open}
       >
         <span className="workspace-card-logo user-avatar">
@@ -60,7 +59,7 @@ export default function UserMenu() {
             type="button"
             className="user-menu-item"
             onClick={() => {
-              setOpen(false);
+              onToggle(false);
               navigate('/profile');
             }}
           >

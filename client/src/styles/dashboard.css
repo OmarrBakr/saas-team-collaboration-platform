@@ -339,6 +339,173 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.app-header {
+  min-height: 4.75rem;
+  padding: 0.85rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(155, 175, 255, 0.12);
+  background: rgba(5, 10, 19, 0.72);
+  backdrop-filter: blur(18px);
+  position: relative;
+  z-index: 20;
+}
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.app-brand-mark {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent-strong);
+  color: white;
+}
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notifications-menu {
+  position: relative;
+}
+
+.notifications-trigger {
+  width: 2.8rem;
+  height: 2.8rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(155, 175, 255, 0.16);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.notifications-trigger:hover,
+.notifications-trigger:focus-visible {
+  background: rgba(119, 166, 255, 0.12);
+  border-color: rgba(119, 166, 255, 0.28);
+  outline: none;
+}
+
+.notifications-trigger svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.notifications-panel {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 0.85rem;
+  border: 1px solid rgba(155, 175, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(6, 10, 19, 0.98);
+  box-shadow: var(--shadow);
+}
+
+.notifications-panel-head {
+  padding: 0.2rem 0.2rem 0.75rem;
+  border-bottom: 1px solid rgba(155, 175, 255, 0.12);
+}
+
+.notifications-empty {
+  margin: 0;
+  padding: 1.25rem 0.2rem 0.35rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    min-height: 4rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .app-brand {
+    font-size: 0.98rem;
+  }
+
+  .app-brand-mark {
+    width: 1.8rem;
+    height: 1.8rem;
+  }
+
+  .app-header-actions {
+    gap: 0.45rem;
+  }
+
+  .user-trigger {
+    padding: 0.3rem;
+    border: 0;
+    background: transparent;
+  }
+
+  .user-trigger:hover,
+  .user-trigger:focus-visible {
+    background: rgba(119, 166, 255, 0.12);
+  }
+
+  .user-meta {
+    display: none;
+  }
+
+  .user-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .notifications-trigger {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .notifications-panel,
+  .user-menu-panel {
+    right: -0.25rem;
+    left: auto;
+    width: min(20rem, calc(100vw - 2rem));
+  }
+
+  .user-menu-panel {
+    right: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-menu-panel,
+  .notifications-panel {
+    left: auto;
+    right: 0;
+    min-width: 0;
+    width: min(16rem, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+  }
+}
+
 .member-presence-dot {
   flex: 0 0 auto;
   width: 0.65rem;
@@ -473,5 +640,16 @@
   .workspace-member-actions,
   .overview-actions {
     width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-menu-panel,
+  .notifications-panel {
+    left: auto;
+    right: 0;
+    min-width: 0;
+    width: min(16rem, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
   }
 }

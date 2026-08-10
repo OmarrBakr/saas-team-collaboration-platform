@@ -9,6 +9,7 @@ import ProfilePage from '../pages/ProfilePage';
 import BoardPage from '../pages/BoardPage';
 import WorkspacePage from '../pages/WorkspacePage';
 import VerifyEmailPage from '../pages/VerifyEmailPage';
+import AppHeader from '../components/app/AppHeader';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -35,15 +36,24 @@ function PublicRoute({ children }) {
   return children;
 }
 
+function AuthenticatedRoute({ children }) {
+  return (
+    <ProtectedRoute>
+      <AppHeader />
+      {children}
+    </ProtectedRoute>
+  );
+}
+
 export default function Router() {
   return (
     <Routes>
       <Route
         path="/"
         element={
-          <ProtectedRoute>
+          <AuthenticatedRoute>
             <DashboardPage />
-          </ProtectedRoute>
+          </AuthenticatedRoute>
         }
       />
 
@@ -63,34 +73,34 @@ export default function Router() {
       <Route
         path="/workspaces/invite/accept"
         element={
-          <ProtectedRoute>
+          <AuthenticatedRoute>
             <AcceptInvitePage />
-          </ProtectedRoute>
+          </AuthenticatedRoute>
         }
       />
       <Route
         path="/profile"
         element={
-          <ProtectedRoute>
+          <AuthenticatedRoute>
             <ProfilePage />
-          </ProtectedRoute>
+          </AuthenticatedRoute>
         }
       />
 
       <Route
         path="/workspaces/:workspaceId"
         element={
-          <ProtectedRoute>
+          <AuthenticatedRoute>
             <WorkspacePage />
-          </ProtectedRoute>
+          </AuthenticatedRoute>
         }
       />
       <Route
         path="/workspaces/:workspaceId/boards/:boardId"
         element={
-          <ProtectedRoute>
+          <AuthenticatedRoute>
             <BoardPage />
-          </ProtectedRoute>
+          </AuthenticatedRoute>
         }
       />
 

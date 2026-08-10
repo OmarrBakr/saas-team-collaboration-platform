@@ -1,5 +1,3 @@
-import UserMenu from './UserMenu';
-
 export default function DashboardTopBar({ title, description }) {
   return (
     <header className="dashboard-topbar">
@@ -9,7 +7,6 @@ export default function DashboardTopBar({ title, description }) {
         <p className="dashboard-intro">{description}</p>
       </div>
 
-      <UserMenu />
     </header>
   );
 }
