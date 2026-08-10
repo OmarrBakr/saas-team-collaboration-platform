@@ -15,7 +15,13 @@ const NotificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['card_assigned', 'card_unassigned'],
+      enum: [
+        'card_assigned',
+        'card_unassigned',
+        'card_moved',
+        'card_updated',
+        'card_deleted',
+      ],
       required: true,
     },
     workspace: {

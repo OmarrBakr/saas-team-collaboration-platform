@@ -49,4 +49,39 @@ const createCardAssignmentNotifications = async ({
   }
 };
 
-module.exports = { createCardAssignmentNotifications };
+const createCardActivityNotifications = async ({
+  io,
+  actorId,
+  workspaceId,
+  boardId,
+  card,
+  type,
+  message,
+  recipientIds,
+}) => {
+  const actorKey = actorId.toString();
+  const recipients = (recipientIds || (card.assignees || []).map((id) => id.toString()));
+  const uniqueRecipientIds = [...new Set(recipients)]
+    .filter((recipientId) => recipientId !== actorKey);
+
+  for (const recipientId of uniqueRecipientIds) {
+    const notification = await Notification.create({
+      recipient: recipientId,
+      actor: actorId,
+      type,
+      workspace: workspaceId,
+      board: boardId,
+      card: card._id,
+      cardTitle: card.title,
+      message,
+    });
+
+    await notification.populate('actor', 'firstName lastName email');
+    io?.to(`user:${notification.recipient}`).emit('notification:new', notification);
+  }
+};
+
+module.exports = {
+  createCardAssignmentNotifications,
+  createCardActivityNotifications,
+};

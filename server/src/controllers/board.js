@@ -10,7 +10,10 @@ const {
   deleteCardAttachment: cloudinaryDeleteCardAttachment,
 } = require('../utils/cloudinary');
 const { emitBoardEvent } = require('../realtime/socket');
-const { createCardAssignmentNotifications } = require('../services/notifications');
+const {
+  createCardActivityNotifications,
+  createCardAssignmentNotifications,
+} = require('../services/notifications');
 
 const broadcastBoardEvent = (req, eventName, board, payload) => {
   emitBoardEvent(req.app.get('io'), eventName, board, {
@@ -363,6 +366,8 @@ const updateCard = async (req, res) => {
 
   const board = await getBoardByWorkspace(req.params.boardId, req.workspace._id);
   const previousAssigneeIds = [];
+  const hasCardContentUpdate = [title, description, labels, dueDate, priority]
+    .some((value) => value !== undefined);
   let sourceColumn;
   let card;
 
@@ -405,6 +410,22 @@ const updateCard = async (req, res) => {
       previousAssigneeIds,
     });
   }
+  if (hasCardContentUpdate) {
+    const currentAssigneeIds = card.assignees.map((id) => id.toString());
+    const previousAssigneeSet = new Set(previousAssigneeIds.map((id) => id.toString()));
+    const existingAssigneeIds = currentAssigneeIds.filter((id) => previousAssigneeSet.has(id));
+
+    await createCardActivityNotifications({
+      io: req.app.get('io'),
+      actorId: req.user.userId,
+      workspaceId: req.workspace._id,
+      boardId: board._id,
+      card,
+      type: 'card_updated',
+      message: `Card "${card.title}" was updated.`,
+      recipientIds: existingAssigneeIds,
+    });
+  }
   broadcastBoardEvent(req, 'card:updated', board);
   res.status(StatusCodes.OK).json({ board });
 };
@@ -423,8 +444,18 @@ const deleteCard = async (req, res) => {
           )
         )
       );
+      const cardData = card.toObject();
       column.cards.pull(req.params.cardId);
       await board.save();
+      await createCardActivityNotifications({
+        io: req.app.get('io'),
+        actorId: req.user.userId,
+        workspaceId: req.workspace._id,
+        boardId: board._id,
+        card: cardData,
+        type: 'card_deleted',
+        message: `Card "${cardData.title}" was deleted.`,
+      });
       broadcastBoardEvent(req, 'card:deleted', board);
       return res.status(StatusCodes.OK).json({ msg: 'Card deleted successfully', board });
     }
@@ -500,6 +531,9 @@ const moveCard = async (req, res) => {
     throw new NotFoundError('List not found');
   }
 
+  const fromColumnTitle = fromColumn.title;
+  const toColumnTitle = toColumn.title;
+
   const cardData = card.toObject();
   fromColumn.cards.pull(cardId);
 
@@ -530,6 +564,17 @@ const moveCard = async (req, res) => {
   normalizeCards(toColumn.cards);
 
   await board.save();
+  if (fromColumnId !== toColumnId) {
+    await createCardActivityNotifications({
+      io: req.app.get('io'),
+      actorId: req.user.userId,
+      workspaceId: req.workspace._id,
+      boardId: board._id,
+      card: cardData,
+      type: 'card_moved',
+      message: `Card "${cardData.title}" was moved from "${fromColumnTitle}" to "${toColumnTitle}".`,
+    });
+  }
   broadcastBoardEvent(req, 'card:moved', board);
   res.status(StatusCodes.OK).json({ board });
 };
