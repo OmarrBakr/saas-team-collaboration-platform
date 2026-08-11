@@ -24,8 +24,10 @@ const notFoundMiddleware = require('./middleware/not-found');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const authenticationMiddleware = require('./middleware/authentication');
 const setupSocket = require('./realtime/socket');
+const { apiLimiter } = require('./middleware/rate-limit');
 
 // routes
+app.use('/api/v1', apiLimiter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', authenticationMiddleware, userRouter);
 app.use('/api/v1/workspaces', authenticationMiddleware, workspaceRouter);
