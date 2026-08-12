@@ -84,45 +84,11 @@ const setupSocket = (httpServer) => {
   });
 
   io.on('connection', (socket) => {
-    socket.joinedWorkspaces = new Set();
     socket.joinedBoards = new Set();
     socket.boardPresenceVersions = new Map();
     socket.join(`user:${socket.user.userId}`);
     addGlobalPresence(socket.user.userId);
     emitGlobalPresence(io);
-
-    socket.on('presence:join-workspace', async (workspaceId, acknowledge) => {
-      try {
-        const workspace = await Workspace.findById(workspaceId).select('members');
-        if (!workspace || !workspace.isMember(socket.user.userId)) {
-          throw new Error('Workspace access denied');
-        }
-
-        const normalizedWorkspaceId = workspace._id.toString();
-        if (!socket.joinedWorkspaces.has(normalizedWorkspaceId)) {
-          socket.join(`workspace:${normalizedWorkspaceId}`);
-          socket.joinedWorkspaces.add(normalizedWorkspaceId);
-        }
-
-        acknowledge?.({
-          ok: true,
-          workspaceId: normalizedWorkspaceId,
-        });
-      } catch (error) {
-        acknowledge?.({ ok: false, message: error.message });
-      }
-    });
-
-    const leaveWorkspace = (workspaceId) => {
-      if (!socket.joinedWorkspaces.has(workspaceId)) return;
-
-      socket.leave(`workspace:${workspaceId}`);
-      socket.joinedWorkspaces.delete(workspaceId);
-    };
-
-    socket.on('presence:leave-workspace', (workspaceId) => {
-      leaveWorkspace(workspaceId?.toString());
-    });
 
     socket.on('presence:join-board', async (boardId, acknowledge) => {
       try {
@@ -141,19 +107,12 @@ const setupSocket = (httpServer) => {
         }
 
         const normalizedBoardId = board._id.toString();
-        const normalizedWorkspaceId = workspace._id.toString();
-
         if (
           socket.disconnected ||
           socket.boardPresenceVersions.get(normalizedBoardId) !== operationVersion
         ) {
           acknowledge?.({ ok: false, message: 'Board presence request expired' });
           return;
-        }
-
-        if (!socket.joinedWorkspaces.has(normalizedWorkspaceId)) {
-          socket.join(`workspace:${normalizedWorkspaceId}`);
-          socket.joinedWorkspaces.add(normalizedWorkspaceId);
         }
 
         if (!socket.joinedBoards.has(normalizedBoardId)) {
@@ -166,7 +125,6 @@ const setupSocket = (httpServer) => {
         acknowledge?.({
           ok: true,
           boardId: normalizedBoardId,
-          workspaceId: normalizedWorkspaceId,
           userIds: [...(boardPresence.get(normalizedBoardId)?.keys() || [])],
         });
       } catch (error) {
@@ -187,9 +145,6 @@ const setupSocket = (httpServer) => {
       removeBoardPresence(normalizedBoardId, socket.user.userId);
       emitBoardPresence(io, normalizedBoardId);
 
-      for (const workspaceId of socket.joinedWorkspaces) {
-        leaveWorkspace(workspaceId);
-      }
     });
 
     socket.on('disconnect', () => {
@@ -199,7 +154,6 @@ const setupSocket = (httpServer) => {
         removeBoardPresence(boardId, socket.user.userId);
         emitBoardPresence(io, boardId);
       }
-      socket.joinedWorkspaces.clear();
       socket.joinedBoards.clear();
       socket.boardPresenceVersions.clear();
     });
