@@ -1,6 +1,10 @@
 const express = require('express');
 
 const { logoUpload } = require('../middleware/upload');
+const {
+  invitationAdminLimiter,
+  invitationWorkspaceLimiter,
+} = require('../middleware/rate-limit');
 
 const {
   requireWorkspaceMember,
@@ -45,6 +49,12 @@ router.patch('/:workspaceId/members/:userId', requireWorkspaceRole('admin'), upd
 router.delete('/:workspaceId/members/:userId', requireWorkspaceRole('admin'), removeMember);
 router.delete('/:workspaceId/leave', requireWorkspaceMember, leaveWorkspace);
 
-router.post('/:workspaceId/invite', requireWorkspaceRole('admin'), inviteMember);
+router.post(
+  '/:workspaceId/invite',
+  requireWorkspaceRole('admin'),
+  invitationAdminLimiter,
+  invitationWorkspaceLimiter,
+  inviteMember
+);
 
 module.exports = router;
