@@ -42,10 +42,18 @@ const invitationWorkspaceLimiter = createLimiter({
   message: 'This workspace has sent too many invitations. Please try again later.',
 });
 
+const uploadUserLimiter = createLimiter({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  keyGenerator: (req) => `upload-user:${req.user.userId}`,
+  message: 'You have uploaded too many files. Please try again later.',
+});
+
 module.exports = {
   apiLimiter,
   authLimiter,
   sensitiveAuthLimiter,
   invitationAdminLimiter,
   invitationWorkspaceLimiter,
+  uploadUserLimiter,
 };

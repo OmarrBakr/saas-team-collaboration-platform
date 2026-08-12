@@ -5,6 +5,9 @@ const Board = require('../models/Board');
 const User = require('../models/User');
 const Workspace = require('../models/Workspace');
 const { BadRequestError, NotFoundError } = require('../errors');
+
+const MAX_ATTACHMENTS_PER_CARD = 10;
+const MAX_WORKSPACE_ATTACHMENT_BYTES = 1024 * 1024 * 1024;
 const {
   uploadCardAttachment: cloudinaryUploadCardAttachment,
   deleteCardAttachment: cloudinaryDeleteCardAttachment,
@@ -471,6 +474,30 @@ const uploadCardAttachment = async (req, res) => {
 
   const board = await getBoardByWorkspace(req.params.boardId, req.workspace._id);
   const { card } = findCardInBoard(board, req.params.cardId);
+
+  if (card.attachments.length >= MAX_ATTACHMENTS_PER_CARD) {
+    throw new BadRequestError(
+      `A card cannot have more than ${MAX_ATTACHMENTS_PER_CARD} attachments`
+    );
+  }
+
+  const [workspaceUsage] = await Board.aggregate([
+    { $match: { workspace: req.workspace._id } },
+    { $unwind: '$columns' },
+    { $unwind: '$columns.cards' },
+    { $unwind: { path: '$columns.cards.attachments', preserveNullAndEmptyArrays: false } },
+    {
+      $group: {
+        _id: null,
+        totalBytes: { $sum: '$columns.cards.attachments.size' },
+      },
+    },
+  ]);
+
+  const currentWorkspaceBytes = workspaceUsage?.totalBytes || 0;
+  if (currentWorkspaceBytes + req.file.size > MAX_WORKSPACE_ATTACHMENT_BYTES) {
+    throw new BadRequestError('This workspace has reached its total attachment storage limit');
+  }
 
   const result = await cloudinaryUploadCardAttachment(
     req.file.buffer,

@@ -1,6 +1,7 @@
 const express = require('express');
 
 const { attachmentUpload } = require('../middleware/upload');
+const { uploadUserLimiter } = require('../middleware/rate-limit');
 
 const {
   requireWorkspaceMember,
@@ -44,6 +45,7 @@ router.delete('/:boardId/cards/:cardId', requireWorkspaceRole('admin'), deleteCa
 router.post(
   '/:boardId/cards/:cardId/attachments',
   requireWorkspaceRole('admin'),
+  uploadUserLimiter,
   attachmentUpload.single('attachment'),
   uploadCardAttachment
 );
