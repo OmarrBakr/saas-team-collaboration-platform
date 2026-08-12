@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { getCurrentUser } from '../services/auth';
@@ -34,6 +34,13 @@ export function AuthProvider({ children }) {
   const location = useLocation();
   const initialPathname = location.pathname;
 
+  const updateBoardPresence = useCallback((boardId, userIds) => {
+    setPresenceByBoard((current) => ({
+      ...current,
+      [boardId]: userIds || [],
+    }));
+  }, []);
+
   useEffect(() => {
     if (isPublicTokenPage(initialPathname)) {
       setLoading(false);
@@ -59,7 +66,7 @@ export function AuthProvider({ children }) {
     const socket = connectSocket();
     const handleGlobalPresenceUpdate = ({ userIds }) => setOnlineUserIds(userIds || []);
     const handleBoardPresenceUpdate = ({ boardId, userIds }) => {
-      setPresenceByBoard((current) => ({ ...current, [boardId]: userIds }));
+      updateBoardPresence(boardId, userIds);
     };
     const handleNewNotification = (notification) => {
       setNotifications((current) => [notification, ...current].slice(0, 50));
@@ -82,7 +89,7 @@ export function AuthProvider({ children }) {
       setPresenceByBoard({});
       setNotifications([]);
     };
-  }, [user]);
+  }, [user, updateBoardPresence]);
 
   const markNotificationRead = async (notificationId) => {
     const result = await markNotificationReadRequest(notificationId);
@@ -111,6 +118,7 @@ export function AuthProvider({ children }) {
         loading,
         onlineUserIds,
         presenceByBoard,
+        updateBoardPresence,
         notifications,
         markNotificationRead,
         markAllNotificationsRead,

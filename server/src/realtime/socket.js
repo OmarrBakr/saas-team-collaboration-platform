@@ -86,6 +86,7 @@ const setupSocket = (httpServer) => {
   io.on('connection', (socket) => {
     socket.joinedWorkspaces = new Set();
     socket.joinedBoards = new Set();
+    socket.boardPresenceVersions = new Map();
     socket.join(`user:${socket.user.userId}`);
     addGlobalPresence(socket.user.userId);
     emitGlobalPresence(io);
@@ -125,6 +126,11 @@ const setupSocket = (httpServer) => {
 
     socket.on('presence:join-board', async (boardId, acknowledge) => {
       try {
+        const normalizedRequestedBoardId = boardId?.toString();
+        const operationVersion =
+          (socket.boardPresenceVersions.get(normalizedRequestedBoardId) || 0) + 1;
+        socket.boardPresenceVersions.set(normalizedRequestedBoardId, operationVersion);
+
         const board = await Board.findById(boardId).select('workspace');
         const workspace = board
           ? await Workspace.findById(board.workspace).select('members')
@@ -136,6 +142,14 @@ const setupSocket = (httpServer) => {
 
         const normalizedBoardId = board._id.toString();
         const normalizedWorkspaceId = workspace._id.toString();
+
+        if (
+          socket.disconnected ||
+          socket.boardPresenceVersions.get(normalizedBoardId) !== operationVersion
+        ) {
+          acknowledge?.({ ok: false, message: 'Board presence request expired' });
+          return;
+        }
 
         if (!socket.joinedWorkspaces.has(normalizedWorkspaceId)) {
           socket.join(`workspace:${normalizedWorkspaceId}`);
@@ -162,6 +176,10 @@ const setupSocket = (httpServer) => {
 
     socket.on('presence:leave-board', (boardId) => {
       const normalizedBoardId = boardId?.toString();
+      socket.boardPresenceVersions.set(
+        normalizedBoardId,
+        (socket.boardPresenceVersions.get(normalizedBoardId) || 0) + 1
+      );
       if (!socket.joinedBoards.has(normalizedBoardId)) return;
 
       socket.leave(`board:${normalizedBoardId}`);
@@ -183,6 +201,7 @@ const setupSocket = (httpServer) => {
       }
       socket.joinedWorkspaces.clear();
       socket.joinedBoards.clear();
+      socket.boardPresenceVersions.clear();
     });
   });
 

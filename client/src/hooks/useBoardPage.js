@@ -49,15 +49,18 @@ export default function useBoardPage(workspaceId, boardId) {
     presenceByBoard,
     joinBoardPresence,
     leaveBoardPresence,
+    updateBoardPresence,
   } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user || !boardId) return undefined;
 
-    joinBoardPresence(boardId);
+    joinBoardPresence(boardId, ({ boardId: joinedBoardId, userIds }) => {
+      updateBoardPresence(joinedBoardId, userIds);
+    });
     return () => leaveBoardPresence(boardId);
-  }, [user, boardId, joinBoardPresence, leaveBoardPresence]);
+  }, [user, boardId, joinBoardPresence, leaveBoardPresence, updateBoardPresence]);
 
   useEffect(() => {
     if (!user || !boardId) return undefined;
