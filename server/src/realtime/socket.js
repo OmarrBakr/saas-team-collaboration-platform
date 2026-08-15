@@ -7,6 +7,31 @@ const Workspace = require('../models/Workspace');
 const globalPresence = new Map();
 const boardPresence = new Map();
 
+const createSocketEventLimiter = ({ windowMs, max }) => {
+  const eventsByKey = new Map();
+
+  return (key) => {
+    const now = Date.now();
+    const timestamps = (eventsByKey.get(key) || []).filter(
+      (timestamp) => now - timestamp < windowMs
+    );
+
+    if (timestamps.length >= max) {
+      eventsByKey.set(key, timestamps);
+      return false;
+    }
+
+    timestamps.push(now);
+    eventsByKey.set(key, timestamps);
+    return true;
+  };
+};
+
+const isPresenceEventAllowed = createSocketEventLimiter({
+  windowMs: 60 * 1000,
+  max: 30,
+});
+
 const parseCookies = (cookieHeader = '') =>
   cookieHeader.split(';').reduce((cookies, cookie) => {
     const separatorIndex = cookie.indexOf('=');
@@ -91,6 +116,11 @@ const setupSocket = (httpServer) => {
     emitGlobalPresence(io);
 
     socket.on('presence:join-board', async (boardId, acknowledge) => {
+      if (!isPresenceEventAllowed(`${socket.user.userId}:presence:join-board`)) {
+        acknowledge?.({ ok: false, code: 'RATE_LIMITED', message: 'Too many board presence requests' });
+        return;
+      }
+
       try {
         const normalizedRequestedBoardId = boardId?.toString();
         const operationVersion =
@@ -132,18 +162,28 @@ const setupSocket = (httpServer) => {
       }
     });
 
-    socket.on('presence:leave-board', (boardId) => {
+    socket.on('presence:leave-board', (boardId, acknowledge) => {
+      if (!isPresenceEventAllowed(`${socket.user.userId}:presence:leave-board`)) {
+        acknowledge?.({ ok: false, code: 'RATE_LIMITED', message: 'Too many board presence requests' });
+        return;
+      }
+
       const normalizedBoardId = boardId?.toString();
       socket.boardPresenceVersions.set(
         normalizedBoardId,
         (socket.boardPresenceVersions.get(normalizedBoardId) || 0) + 1
       );
-      if (!socket.joinedBoards.has(normalizedBoardId)) return;
+      if (!socket.joinedBoards.has(normalizedBoardId)) {
+        acknowledge?.({ ok: true, boardId: normalizedBoardId, joined: false });
+        return;
+      }
 
       socket.leave(`board:${normalizedBoardId}`);
       socket.joinedBoards.delete(normalizedBoardId);
       removeBoardPresence(normalizedBoardId, socket.user.userId);
       emitBoardPresence(io, normalizedBoardId);
+
+      acknowledge?.({ ok: true, boardId: normalizedBoardId, joined: false });
 
     });
 

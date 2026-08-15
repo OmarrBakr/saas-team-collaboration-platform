@@ -8,7 +8,10 @@ const requestBoardPresence = (boardId) => {
   if (!socket || !normalizedBoardId) return;
 
   socket.emit('presence:join-board', normalizedBoardId, (response) => {
-    if (!response?.ok) return;
+    if (!response?.ok) {
+      return;
+    }
+
     activeBoardPresence.get(normalizedBoardId)?.(response);
   });
 };
@@ -47,7 +50,12 @@ export const leaveBoardPresence = (boardId) => {
   if (!normalizedBoardId) return;
 
   activeBoardPresence.delete(normalizedBoardId);
-  socket?.emit('presence:leave-board', normalizedBoardId);
+  socket?.emit('presence:leave-board', normalizedBoardId, (response) => {
+    if (!response?.ok) {
+      return;
+    }
+
+  });
 };
 
 const boardEventNames = [

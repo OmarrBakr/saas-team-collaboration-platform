@@ -136,8 +136,8 @@ export default function DashboardPage() {
             <p className="empty-state dashboard-loading">Loading your workspaces...</p>
           ) : workspaces.length === 0 ? (
             <p className="empty-state">
-              You do not belong to any workspaces yet. Create one from the API or
-              invite yourself into an existing team.
+              You are not part of any workspaces yet. Create a workspace or ask an
+              administrator to invite you to one.
             </p>
           ) : (
             <div className="workspace-card-grid">
