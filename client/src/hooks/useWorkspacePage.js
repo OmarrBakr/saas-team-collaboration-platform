@@ -13,6 +13,7 @@ import {
   updateWorkspaceMemberRole,
   uploadWorkspaceLogo,
 } from '../services/workspaces';
+import { createBoard } from '../services/boards';
 
 export default function useWorkspacePage(workspaceId, options = {}) {
   const { includeBoards = true } = options;
@@ -51,6 +52,10 @@ export default function useWorkspacePage(workspaceId, options = {}) {
   const [draftMemberRoles, setDraftMemberRoles] = useState({});
   const [isSavingRoles, setIsSavingRoles] = useState(false);
   const [manageError, setManageError] = useState('');
+  const [isCreateBoardOpen, setIsCreateBoardOpen] = useState(false);
+  const [isCreatingBoard, setIsCreatingBoard] = useState(false);
+  const [createBoardError, setCreateBoardError] = useState('');
+  const [createBoardForm, setCreateBoardForm] = useState({ name: '', description: '' });
 
   useEffect(() => {
     const loadWorkspace = async () => {
@@ -347,6 +352,41 @@ export default function useWorkspacePage(workspaceId, options = {}) {
     }
   };
 
+  const openCreateBoardModal = () => {
+    setCreateBoardForm({ name: '', description: '' });
+    setCreateBoardError('');
+    setIsCreateBoardOpen(true);
+  };
+
+  const handleCreateBoardChange = (event) => {
+    const { name, value } = event.target;
+    setCreateBoardForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleCreateBoard = async (event) => {
+    event.preventDefault();
+    const name = createBoardForm.name.trim();
+    if (!name) {
+      setCreateBoardError('Board name is required.');
+      return;
+    }
+
+    setIsCreatingBoard(true);
+    setCreateBoardError('');
+    try {
+      const result = await createBoard(workspaceId, {
+        name,
+        description: createBoardForm.description.trim(),
+      });
+      setBoards((current) => [...current, result.board]);
+      setIsCreateBoardOpen(false);
+    } catch (err) {
+      setCreateBoardError(err.message || 'Something went wrong');
+    } finally {
+      setIsCreatingBoard(false);
+    }
+  };
+
   return {
     user,
     navigate,
@@ -403,5 +443,13 @@ export default function useWorkspacePage(workspaceId, options = {}) {
     confirmRemoveMember,
     removingMemberId,
     handleRemoveMember,
+    isCreateBoardOpen,
+    setIsCreateBoardOpen,
+    isCreatingBoard,
+    createBoardError,
+    createBoardForm,
+    openCreateBoardModal,
+    handleCreateBoardChange,
+    handleCreateBoard,
   };
 }

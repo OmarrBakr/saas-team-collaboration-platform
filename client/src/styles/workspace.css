@@ -226,7 +226,7 @@
 @media (max-width: 640px) {
   .workspace-hero-main {
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 2rem;
   }
 
   .workspace-hero-main h1 {

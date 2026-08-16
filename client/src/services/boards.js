@@ -9,6 +9,12 @@ export const updateBoard = (workspaceId, boardId, payload) =>
     body: JSON.stringify(payload),
   });
 
+export const createBoard = (workspaceId, payload) =>
+  request(`/api/v1/workspaces/${workspaceId}/boards`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
 export const deleteBoard = (workspaceId, boardId) =>
   request(`/api/v1/workspaces/${workspaceId}/boards/${boardId}`, {
     method: 'DELETE',

@@ -9,6 +9,7 @@ import WorkspaceDangerModal from '../components/workspaces/WorkspaceDangerModal'
 import WorkspaceHeaderSection from '../components/workspaces/WorkspaceHeaderSection';
 import WorkspaceBoardsSection from '../components/workspaces/WorkspaceBoardsSection';
 import WorkspaceMembersSection from '../components/workspaces/WorkspaceMembersSection';
+import CreateBoardModal from '../components/workspaces/CreateBoardModal';
 import '../styles/dashboard.css';
 import '../styles/workspace.css';
 import '../styles/board.css';
@@ -70,6 +71,14 @@ export default function WorkspacePage() {
     closeRemoveMemberModal,
     confirmRemoveMember,
     removingMemberId,
+    isCreateBoardOpen,
+    setIsCreateBoardOpen,
+    isCreatingBoard,
+    createBoardError,
+    createBoardForm,
+    openCreateBoardModal,
+    handleCreateBoardChange,
+    handleCreateBoard,
   } = useWorkspacePage(workspaceId);
 
   const isAccessDenied = error?.toLowerCase?.().includes('not a member');
@@ -123,6 +132,8 @@ export default function WorkspacePage() {
       <section className="workspace-grid">
         <WorkspaceBoardsSection
           boards={boards}
+          isAdmin={isAdmin}
+          onCreateBoard={openCreateBoardModal}
           onBoardClick={(board) => navigate(`/workspaces/${workspaceId}/boards/${board._id}`)}
         />
         <WorkspaceMembersSection
@@ -192,6 +203,16 @@ export default function WorkspacePage() {
         isSubmitting={isInviting}
         error={inviteError}
         successMessage={inviteMessage}
+      />
+
+      <CreateBoardModal
+        isOpen={isCreateBoardOpen}
+        form={createBoardForm}
+        onChange={handleCreateBoardChange}
+        onSubmit={handleCreateBoard}
+        onClose={() => setIsCreateBoardOpen(false)}
+        isSubmitting={isCreatingBoard}
+        error={createBoardError}
       />
     </main>
   );

@@ -1,4 +1,4 @@
-export default function WorkspaceBoardsSection({ boards, onBoardClick }) {
+export default function WorkspaceBoardsSection({ boards, isAdmin, onCreateBoard, onBoardClick }) {
   return (
     <article className="dashboard-panel">
       <div className="panel-head">
@@ -6,6 +6,11 @@ export default function WorkspaceBoardsSection({ boards, onBoardClick }) {
           <p className="panel-label">Boards</p>
           <h2>Workspace boards</h2>
         </div>
+        {isAdmin && (
+          <button type="button" className="workspace-create-btn" onClick={onCreateBoard}>
+            Create board
+          </button>
+        )}
       </div>
 
       {boards.length === 0 ? (
