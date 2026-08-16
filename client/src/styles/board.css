@@ -374,6 +374,21 @@
   font-weight: 600;
 }
 
+.board-card-label-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  color: #07111f;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .board-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

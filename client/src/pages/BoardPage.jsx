@@ -322,9 +322,15 @@ export default function BoardPage() {
                               ) : null}
 
                               {card.labels?.length ? (
-                                <span className="board-card-meta-item">
-                                  {card.labels.length} label{card.labels.length === 1 ? '' : 's'}
-                                </span>
+                                card.labels.map((label, index) => (
+                                  <span
+                                    key={`${label.name || 'label'}-${index}`}
+                                    className="board-card-label-chip"
+                                    style={{ backgroundColor: label.color || '#9fb6ff' }}
+                                  >
+                                    {label.name}
+                                  </span>
+                                ))
                               ) : null}
 
                               {card.attachments?.length ? (
