@@ -14,7 +14,9 @@ const logError = (event, err, req, fields = {}) => {
 
 const errorHandlerMiddleware = (err, req, res, next) => {
   if (err instanceof CustomAPIError) {
-    logError('request.rejected', err, req, { statusCode: err.statusCode });
+    if (err.statusCode !== StatusCodes.UNAUTHORIZED) {
+      logError('request.rejected', err, req, { statusCode: err.statusCode });
+    }
     return res.status(err.statusCode).json({ msg: err.message });
   }
 
