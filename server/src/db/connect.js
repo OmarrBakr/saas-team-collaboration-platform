@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const logger = require('../utils/logger');
 
 const connectDB = async () => {
   try {
@@ -7,11 +8,25 @@ const connectDB = async () => {
     }
 
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('MongoDB connected');
+    logger.info('database.connected', { database: 'mongodb' });
   } catch (error) {
-    console.error('MongoDB connection error:', error.message);
+    logger.error('database.connection_failed', {
+      database: 'mongodb',
+      error: logger.serializeError(error),
+    });
     process.exit(1);
   }
 };
+
+mongoose.connection.on('error', (error) => {
+  logger.error('database.connection_error', {
+    database: 'mongodb',
+    error: logger.serializeError(error),
+  });
+});
+
+mongoose.connection.on('disconnected', () => {
+  logger.warn('database.disconnected', { database: 'mongodb' });
+});
 
 module.exports = connectDB;

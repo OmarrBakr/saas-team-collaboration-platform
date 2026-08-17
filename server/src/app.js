@@ -25,6 +25,17 @@ const errorHandlerMiddleware = require('./middleware/error-handler');
 const authenticationMiddleware = require('./middleware/authentication');
 const setupSocket = require('./realtime/socket');
 const { apiLimiter } = require('./middleware/rate-limit');
+const logger = require('./utils/logger');
+
+process.on('uncaughtException', (error) => {
+  logger.error('process.uncaught_exception', { error: logger.serializeError(error) });
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  const error = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error('process.unhandled_rejection', { error: logger.serializeError(error) });
+});
 
 // routes
 app.use('/api/v1', apiLimiter);
@@ -46,7 +57,7 @@ const startServer = async () => {
   app.set('io', io);
 
   httpServer.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
+    logger.info('server.started', { port });
   });
 };
 
