@@ -338,6 +338,25 @@ export default function useWorkspacePage(workspaceId, options = {}) {
       return;
     }
 
+    const normalizedInviteEmail = trimmedEmail.toLowerCase();
+    const isExistingMember = members.some(
+      (member) => member.user?.email?.toLowerCase?.() === normalizedInviteEmail
+    );
+
+    if (isExistingMember) {
+      setInviteError('This user is already a member of the workspace.');
+      return;
+    }
+
+    const hasActiveInvitation = invitations.some(
+      (invitation) => invitation.email?.toLowerCase?.() === normalizedInviteEmail
+    );
+
+    if (hasActiveInvitation) {
+      setInviteError('An active invitation already exists for this email.');
+      return;
+    }
+
     setIsInviting(true);
 
     try {
