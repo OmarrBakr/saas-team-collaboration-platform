@@ -5,7 +5,8 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "node --watch src/app.js"
+    "dev": "node --watch src/app.js",
+    "test": "jest --runInBand"
   },
   "keywords": [
     "express",
@@ -14,6 +15,9 @@
   ],
   "author": "",
   "license": "ISC",
+  "devDependencies": {
+    "jest": "^30.4.2"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.0",
