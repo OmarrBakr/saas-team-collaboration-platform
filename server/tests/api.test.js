@@ -72,7 +72,9 @@ describe('API integration', () => {
 
   test('creates a workspace for an authenticated user', async () => {
     const user = await User.create(testUser);
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '5m',
+    });
 
     const response = await request(app)
       .post('/api/v1/workspaces')
@@ -100,7 +102,9 @@ describe('API integration', () => {
       members: [{ user: otherUser._id, role: 'admin' }],
     });
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '5m',
+    });
     const response = await request(app)
       .get('/api/v1/workspaces')
       .set('Cookie', `accessToken=${token}`);
