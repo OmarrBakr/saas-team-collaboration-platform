@@ -1,0 +1,26 @@
+services:
+  mongodb:
+    image: mongo:8
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - flowvia-mongodb:/data/db
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./server/.env
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/flowvia
+      CLIENT_ORIGIN: http://localhost:5173
+      PORT: 3000
+    depends_on:
+      - mongodb
+
+volumes:
+  flowvia-mongodb:
