@@ -5,6 +5,11 @@ const testMongoUri =
 
 jest.setTimeout(30000);
 
+process.env.JWT_SECRET = 'test-access-secret';
+process.env.JWT_LIFETIME = '5m';
+process.env.REFRESH_TOKEN_SECRET = 'test-refresh-secret';
+process.env.REFRESH_TOKEN_LIFETIME = '1d';
+
 beforeAll(async () => {
   await mongoose.connect(testMongoUri);
 });
