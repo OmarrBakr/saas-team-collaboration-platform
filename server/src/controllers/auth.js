@@ -9,6 +9,11 @@ const sendVerificationEmail = require('../utils/sendVerficationEmail');
 const sendResetPasswordEmail = require('../utils/sendResetPasswordEmail');
 const createHash = require('../utils/createHash');
 const crypto = require('crypto');
+const { generateCsrfToken } = require('../middleware/csrf');
+
+const getCsrfToken = (req, res) => {
+  res.json({ csrfToken: generateCsrfToken(req, res) });
+};
 
 const buildUserResponse = (user) => ({
   id: user._id,
@@ -152,14 +157,14 @@ const logout = async (req, res) => {
     httpOnly: true,
     expires: new Date(Date.now() - 1000),
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
 
   res.cookie('refreshToken', 'logout', {
     httpOnly: true,
     expires: new Date(Date.now() - 1000),
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
 
   res.status(StatusCodes.OK).json({ msg: 'Logged out successfully' });
@@ -337,6 +342,7 @@ const googleOAuthCallback = async (req, res) => {
 };
 
 module.exports = {
+  getCsrfToken,
   register,
   login,
   refresh,

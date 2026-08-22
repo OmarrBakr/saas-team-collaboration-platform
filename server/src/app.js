@@ -4,6 +4,7 @@ require('dotenv').config();
 require('express-async-errors');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const { doubleCsrfProtection } = require('./middleware/csrf');
 
 const connectDB = require('./db/connect');
 
@@ -18,6 +19,8 @@ app.use(
     credentials: true,
   })
 );
+app.use(doubleCsrfProtection);
+
 
 // routers
 const authRouter = require('./routes/auth');

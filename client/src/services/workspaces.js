@@ -61,17 +61,9 @@ export const uploadWorkspaceLogo = (workspaceId, file) => {
   const formData = new FormData();
   formData.append('logo', file);
 
-  return fetch(`/api/v1/workspaces/${workspaceId}/logo`, {
+  return request(`/api/v1/workspaces/${workspaceId}/logo`, {
     method: 'PATCH',
-    credentials: 'include',
+    contentType: null,
     body: formData,
-  }).then(async (res) => {
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      throw new Error(data.msg || 'Something went wrong');
-    }
-
-    return data;
   });
 };

@@ -14,11 +14,14 @@ const {
   forgetPassword,
   initiateGoogleOAuth,
   googleOAuthCallback,
+  getCsrfToken,
 } = require('../controllers/auth');
 
 const router = express.Router();
 
 router.use(authLimiter);
+
+router.get('/csrf-token', getCsrfToken);
 
 router.post('/register', register);
 router.post('/login', login);
