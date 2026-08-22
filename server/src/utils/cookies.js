@@ -1,9 +1,15 @@
 const ms = require('ms');
 
+const sameSite = process.env.COOKIE_SAME_SITE || 'lax';
+
+if (!['lax', 'strict', 'none'].includes(sameSite)) {
+  throw new Error('COOKIE_SAME_SITE must be lax, strict, or none');
+}
+
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  sameSite,
 };
 
 const attachCookies = (res, accessToken, refreshToken) => {
@@ -19,3 +25,4 @@ const attachCookies = (res, accessToken, refreshToken) => {
 };
 
 module.exports = attachCookies;
+module.exports.cookieOptions = cookieOptions;

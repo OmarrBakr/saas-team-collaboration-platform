@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Workspace = require('../models/Workspace');
 const { BadRequestError, UnauthenticatedError, NotFoundError } = require('../errors');
 const attachCookies = require('../utils/cookies');
+const { cookieOptions } = require('../utils/cookies');
 const sendVerificationEmail = require('../utils/sendVerficationEmail');
 const sendResetPasswordEmail = require('../utils/sendResetPasswordEmail');
 const createHash = require('../utils/createHash');
@@ -154,17 +155,13 @@ const logout = async (req, res) => {
   }
 
   res.cookie('accessToken', 'logout', {
-    httpOnly: true,
+    ...cookieOptions,
     expires: new Date(Date.now() - 1000),
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
 
   res.cookie('refreshToken', 'logout', {
-    httpOnly: true,
+    ...cookieOptions,
     expires: new Date(Date.now() - 1000),
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
 
   res.status(StatusCodes.OK).json({ msg: 'Logged out successfully' });
