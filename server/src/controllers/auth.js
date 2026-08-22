@@ -59,7 +59,7 @@ const register = async (req, res) => {
   const accessToken = user.createJWT();
   const refreshToken = user.createRefreshToken();
 
-  user.refreshToken = refreshToken;
+  user.refreshToken = createHash(refreshToken);
   await user.save();
 
   await createPersonalWorkspace(user);
@@ -100,7 +100,7 @@ const login = async (req, res) => {
   const accessToken = user.createJWT();
   const refreshToken = user.createRefreshToken();
 
-  user.refreshToken = refreshToken;
+  user.refreshToken = createHash(refreshToken);
   await user.save();
 
   attachCookies(res, accessToken, refreshToken);
@@ -127,14 +127,14 @@ const refresh = async (req, res) => {
 
   const user = await User.findById(payload.userId).select('+refreshToken');
 
-  if (!user || user.refreshToken !== refreshToken) {
+  if (!user || user.refreshToken !== createHash(refreshToken)) {
     throw new UnauthenticatedError('Authentication invalid');
   }
 
   const accessToken = user.createJWT();
   const newRefreshToken = user.createRefreshToken();
 
-  user.refreshToken = newRefreshToken;
+  user.refreshToken = createHash(newRefreshToken);
   await user.save();
 
   attachCookies(res, accessToken, newRefreshToken);
@@ -146,7 +146,9 @@ const logout = async (req, res) => {
   const { refreshToken } = req.cookies;
 
   if (refreshToken) {
-    const user = await User.findOne({ refreshToken }).select('+refreshToken');
+    const user = await User.findOne({
+      refreshToken: createHash(refreshToken),
+    }).select('+refreshToken');
 
     if (user) {
       user.refreshToken = null;
@@ -326,7 +328,7 @@ const googleOAuthCallback = async (req, res) => {
   const accessToken = user.createJWT();
   const refreshToken = user.createRefreshToken();
 
-  user.refreshToken = refreshToken;
+  user.refreshToken = createHash(refreshToken);
   await user.save();
 
   if (isNewUser) {
