@@ -4,6 +4,7 @@ require('dotenv').config();
 require('express-async-errors');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const helmet = require('helmet');
 const { doubleCsrfProtection } = require('./middleware/csrf');
 
 const connectDB = require('./db/connect');
@@ -13,6 +14,7 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(helmet());
 app.use(
   cors({
     origin: process.env.CLIENT_ORIGIN,
