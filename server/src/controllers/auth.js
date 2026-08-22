@@ -152,14 +152,14 @@ const logout = async (req, res) => {
     httpOnly: true,
     expires: new Date(Date.now() - 1000),
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: 'lax',
   });
 
   res.cookie('refreshToken', 'logout', {
     httpOnly: true,
     expires: new Date(Date.now() - 1000),
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: 'lax',
   });
 
   res.status(StatusCodes.OK).json({ msg: 'Logged out successfully' });

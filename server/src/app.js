@@ -3,6 +3,7 @@ const http = require('http');
 require('dotenv').config();
 require('express-async-errors');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 
 const connectDB = require('./db/connect');
 
@@ -11,6 +12,12 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+  cors({
+    origin: process.env.CLIENT_ORIGIN,
+    credentials: true,
+  })
+);
 
 // routers
 const authRouter = require('./routes/auth');
