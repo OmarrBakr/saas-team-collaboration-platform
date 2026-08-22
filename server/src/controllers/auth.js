@@ -5,10 +5,16 @@ const User = require('../models/User');
 const Workspace = require('../models/Workspace');
 const { BadRequestError, UnauthenticatedError, NotFoundError } = require('../errors');
 const attachCookies = require('../utils/cookies');
+const { cookieOptions } = require('../utils/cookies');
 const sendVerificationEmail = require('../utils/sendVerficationEmail');
 const sendResetPasswordEmail = require('../utils/sendResetPasswordEmail');
 const createHash = require('../utils/createHash');
 const crypto = require('crypto');
+const { generateCsrfToken } = require('../middleware/csrf');
+
+const getCsrfToken = (req, res) => {
+  res.json({ csrfToken: generateCsrfToken(req, res) });
+};
 
 const buildUserResponse = (user) => ({
   id: user._id,
@@ -53,7 +59,7 @@ const register = async (req, res) => {
   const accessToken = user.createJWT();
   const refreshToken = user.createRefreshToken();
 
-  user.refreshToken = refreshToken;
+  user.refreshToken = createHash(refreshToken);
   await user.save();
 
   await createPersonalWorkspace(user);
@@ -94,7 +100,7 @@ const login = async (req, res) => {
   const accessToken = user.createJWT();
   const refreshToken = user.createRefreshToken();
 
-  user.refreshToken = refreshToken;
+  user.refreshToken = createHash(refreshToken);
   await user.save();
 
   attachCookies(res, accessToken, refreshToken);
@@ -121,14 +127,14 @@ const refresh = async (req, res) => {
 
   const user = await User.findById(payload.userId).select('+refreshToken');
 
-  if (!user || user.refreshToken !== refreshToken) {
+  if (!user || user.refreshToken !== createHash(refreshToken)) {
     throw new UnauthenticatedError('Authentication invalid');
   }
 
   const accessToken = user.createJWT();
   const newRefreshToken = user.createRefreshToken();
 
-  user.refreshToken = newRefreshToken;
+  user.refreshToken = createHash(newRefreshToken);
   await user.save();
 
   attachCookies(res, accessToken, newRefreshToken);
@@ -140,7 +146,9 @@ const logout = async (req, res) => {
   const { refreshToken } = req.cookies;
 
   if (refreshToken) {
-    const user = await User.findOne({ refreshToken }).select('+refreshToken');
+    const user = await User.findOne({
+      refreshToken: createHash(refreshToken),
+    }).select('+refreshToken');
 
     if (user) {
       user.refreshToken = null;
@@ -149,17 +157,13 @@ const logout = async (req, res) => {
   }
 
   res.cookie('accessToken', 'logout', {
-    httpOnly: true,
+    ...cookieOptions,
     expires: new Date(Date.now() - 1000),
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
 
   res.cookie('refreshToken', 'logout', {
-    httpOnly: true,
+    ...cookieOptions,
     expires: new Date(Date.now() - 1000),
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
 
   res.status(StatusCodes.OK).json({ msg: 'Logged out successfully' });
@@ -324,7 +328,7 @@ const googleOAuthCallback = async (req, res) => {
   const accessToken = user.createJWT();
   const refreshToken = user.createRefreshToken();
 
-  user.refreshToken = refreshToken;
+  user.refreshToken = createHash(refreshToken);
   await user.save();
 
   if (isNewUser) {
@@ -337,6 +341,7 @@ const googleOAuthCallback = async (req, res) => {
 };
 
 module.exports = {
+  getCsrfToken,
   register,
   login,
   refresh,

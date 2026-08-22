@@ -13,6 +13,11 @@ const logError = (event, err, req, fields = {}) => {
 };
 
 const errorHandlerMiddleware = (err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    logError('request.rejected', err, req, { statusCode: StatusCodes.FORBIDDEN });
+    return res.status(StatusCodes.FORBIDDEN).json({ msg: 'Invalid CSRF token' });
+  }
+
   if (err instanceof CustomAPIError) {
     if (err.statusCode !== StatusCodes.UNAUTHORIZED) {
       logError('request.rejected', err, req, { statusCode: err.statusCode });

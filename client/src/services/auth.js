@@ -4,6 +4,26 @@
 
 let refreshPromise = null;
 
+const getCookie = (name) =>
+  document.cookie
+    .split('; ')
+    .find((cookie) => cookie.startsWith(`${name}=`))
+    ?.split('=')[1];
+
+const ensureCsrfToken = async () => {
+  let token = getCookie('csrfToken');
+
+  if (!token) {
+    const response = await fetch('/api/v1/auth/csrf-token', {
+      credentials: 'include',
+    });
+    const data = await response.json();
+    token = data.csrfToken;
+  }
+
+  return token;
+};
+
 const redirectToLogin = () => {
   const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   window.location.assign('/login');
@@ -15,6 +35,10 @@ export const request = async (path, options = {}) => {
 
   if (contentType) {
     requestHeaders['Content-Type'] = contentType;
+  }
+
+  if (!['GET', 'HEAD', 'OPTIONS'].includes((fetchOptions.method || 'GET').toUpperCase())) {
+    requestHeaders['X-CSRF-Token'] = await ensureCsrfToken();
   }
 
   const res = await fetch(path, {
@@ -35,10 +59,13 @@ export const request = async (path, options = {}) => {
 
   if (res.status === 401 && !isAuthEndpoint) {
     if (!refreshPromise) {
-      refreshPromise = fetch('/api/v1/auth/refresh', {
-        method: 'POST',
-        credentials: 'include',
-      })
+      refreshPromise = ensureCsrfToken().then((csrfToken) =>
+        fetch('/api/v1/auth/refresh', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'X-CSRF-Token': csrfToken },
+        })
+      )
         .then((refreshRes) => {
           if (!refreshRes.ok) {
             redirectToLogin();
@@ -85,3 +112,5 @@ export const verifyEmail = (payload) =>
 
 export const getCurrentUser = () =>
   request('/api/v1/users/me', { method: 'GET' });
+
+export { ensureCsrfToken };

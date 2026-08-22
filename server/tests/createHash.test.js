@@ -11,7 +11,7 @@ describe('createHash', () => {
     expect(createHash('token-one')).not.toBe(createHash('token-two'));
   });
 
-  test('returns a 32-character hexadecimal string', () => {
-    expect(createHash('test-token')).toMatch(/^[a-f0-9]{32}$/);
+  test('returns a 64-character hexadecimal string', () => {
+    expect(createHash('test-token')).toMatch(/^[a-f0-9]{64}$/);
   });
 });

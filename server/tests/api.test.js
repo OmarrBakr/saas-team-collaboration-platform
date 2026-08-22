@@ -12,6 +12,12 @@ const testUser = {
   password: 'Password1',
 };
 
+const getCsrfAgent = async () => {
+  const agent = request.agent(app);
+  const response = await agent.get('/api/v1/auth/csrf-token');
+  return { agent, csrfToken: response.body.csrfToken };
+};
+
 describe('API integration', () => {
   beforeEach(() => {
     process.env.JWT_SECRET = 'test-access-secret';
@@ -56,9 +62,11 @@ describe('API integration', () => {
 
   test('logs in an existing user and returns authentication cookies', async () => {
     await User.create(testUser);
+    const { agent, csrfToken } = await getCsrfAgent();
 
-    const response = await request(app)
+    const response = await agent
       .post('/api/v1/auth/login')
+      .set('X-CSRF-Token', csrfToken)
       .send({ email: testUser.email, password: testUser.password });
 
     expect(response.statusCode).toBe(200);
@@ -72,13 +80,15 @@ describe('API integration', () => {
 
   test('creates a workspace for an authenticated user', async () => {
     const user = await User.create(testUser);
+    const { agent, csrfToken } = await getCsrfAgent();
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: '5m',
     });
 
-    const response = await request(app)
+    const response = await agent
       .post('/api/v1/workspaces')
       .set('Cookie', `accessToken=${token}`)
+      .set('X-CSRF-Token', csrfToken)
       .send({ name: 'Test Workspace', description: 'Integration test workspace' });
 
     expect(response.statusCode).toBe(201);
