@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
 import AuthPage from '../pages/AuthPage';
@@ -10,19 +10,7 @@ import BoardPage from '../pages/BoardPage';
 import WorkspacePage from '../pages/WorkspacePage';
 import VerifyEmailPage from '../pages/VerifyEmailPage';
 import AppHeader from '../components/app/AppHeader';
-
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  const location = useLocation();
-
-  if (loading) return null;
-
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return children;
-}
+import ProtectedRoute from './ProtectedRoute';
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
