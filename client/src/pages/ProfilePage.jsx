@@ -39,6 +39,15 @@ export default function ProfilePage() {
     });
   }, [user]);
 
+  const hasNameChanges =
+    user &&
+    (nameForm.firstName.trim() !== (user.firstName || '').trim() ||
+      nameForm.lastName.trim() !== (user.lastName || '').trim());
+
+  const hasCompletePasswordForm = Object.values(passwordForm).every((value) =>
+    value.trim()
+  );
+
   const handleNameChange = (event) => {
     const { name, value } = event.target;
     setNameForm((current) => ({ ...current, [name]: value }));
@@ -58,6 +67,8 @@ export default function ProfilePage() {
       setNameError('First name and last name are required.');
       return;
     }
+
+    if (!hasNameChanges) return;
 
     setSavingName(true);
 
@@ -170,7 +181,11 @@ export default function ProfilePage() {
             {nameError && <div className="status-message error">{nameError}</div>}
             {nameMessage && <div className="status-message success">{nameMessage}</div>}
 
-            <button type="submit" className="primary-btn profile-submit" disabled={savingName}>
+            <button
+              type="submit"
+              className="primary-btn profile-submit"
+              disabled={savingName || !hasNameChanges}
+            >
               {savingName ? 'Saving...' : 'Save changes'}
             </button>
           </form>
@@ -229,7 +244,11 @@ export default function ProfilePage() {
             {passwordError && <div className="status-message error">{passwordError}</div>}
             {passwordMessage && <div className="status-message success">{passwordMessage}</div>}
 
-            <button type="submit" className="primary-btn profile-submit" disabled={savingPassword}>
+            <button
+              type="submit"
+              className="primary-btn profile-submit"
+              disabled={savingPassword || !hasCompletePasswordForm}
+            >
               {savingPassword ? 'Updating...' : 'Update password'}
             </button>
           </form>
