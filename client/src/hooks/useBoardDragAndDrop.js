@@ -156,7 +156,7 @@ export default function useBoardDragAndDrop({
     const columnId =
       cardElement?.dataset?.columnId || columnElement?.dataset?.columnId || "";
 
-    if (cardId && columnId) {
+    if (columnId) {
       setDragOverCardId(cardId);
       dragPointerIdRef.current = {
         ...dragPointerIdRef.current,
@@ -204,9 +204,11 @@ export default function useBoardDragAndDrop({
     const fromIndex = fromColumn.cards.findIndex(
       (card) => card._id?.toString() === dragged.cardId.toString(),
     );
-    let toIndex = toColumn.cards.findIndex(
-      (card) => card._id?.toString() === target.cardId.toString(),
-    );
+    let toIndex = target.cardId
+      ? toColumn.cards.findIndex(
+          (card) => card._id?.toString() === target.cardId.toString(),
+        )
+      : toColumn.cards.length;
 
     setDraggedCardId("");
     setDragOverCardId("");
@@ -315,7 +317,7 @@ export default function useBoardDragAndDrop({
     const columnId =
       cardElement?.dataset?.columnId || columnElement?.dataset?.columnId || "";
 
-    if (cardId && columnId) {
+    if (columnId) {
       setDragOverCardId(cardId);
       dragPointerIdRef.current = {
         ...dragPointerIdRef.current,
@@ -456,7 +458,7 @@ export default function useBoardDragAndDrop({
         cardElement?.dataset?.columnId ||
         columnElement?.dataset?.columnId ||
         "";
-      if (cardId && columnId) {
+      if (columnId) {
         setDragOverCardId(cardId);
         dragPointerIdRef.current = {
           ...dragPointerIdRef.current,

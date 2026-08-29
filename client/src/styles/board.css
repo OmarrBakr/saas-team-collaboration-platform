@@ -120,17 +120,11 @@
 .board-column-card--dragging {
   opacity: 0.9;
   border-color: rgba(159, 182, 255, 0.8);
-  box-shadow: 0 22px 46px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(159, 182, 255, 0.22), var(--shadow);
   z-index: 3;
 }
 
 .board-column-card--drop-target {
   border-color: rgba(159, 182, 255, 0.95);
-  box-shadow:
-    0 0 0 1px rgba(159, 182, 255, 0.3),
-    0 0 0 8px rgba(159, 182, 255, 0.14),
-    0 18px 36px rgba(159, 182, 255, 0.16),
-    var(--shadow);
 }
 
 .board-list-head {
