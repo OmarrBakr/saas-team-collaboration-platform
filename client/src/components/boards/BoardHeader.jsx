@@ -72,6 +72,10 @@ export default function BoardHeader({
           onClick={onViewers}
           aria-label={`Show ${onlineBoardMemberIds.length} people viewing this board`}
         >
+          <svg className="board-viewers-modal-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M2.5 12s3.4-5.5 9.5-5.5 9.5 5.5 9.5 5.5-3.4 5.5-9.5 5.5S2.5 12 2.5 12Z" />
+            <circle cx="12" cy="12" r="2.5" />
+          </svg>{" "}
           <span aria-hidden="true">◉</span> {onlineBoardMemberIds.length}{" "}
           viewing
         </button>

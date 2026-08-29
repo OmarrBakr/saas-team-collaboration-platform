@@ -110,7 +110,13 @@ export default function BoardPage() {
     workspaceMembers,
     onlineBoardMemberIds,
   };
-  const modalActions = { ...rest, onlineBoardMemberIds };
+  const modalActions = {
+    ...rest,
+    onlineBoardMemberIds,
+    setIsDeletingOpen,
+    handleDeleteBoard,
+    setIsBoardViewersOpen,
+  };
 
   return (
     <main className="workspace-shell board-shell">

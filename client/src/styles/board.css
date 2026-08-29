@@ -32,6 +32,7 @@
   font: inherit;
   transition: background-color 0.18s ease, border-color 0.18s ease;
   line-height: 1.4;
+  gap: 0.3rem;
 }
 
 .board-viewers-badge:hover,
@@ -480,4 +481,7 @@
   .board-card-meta-description {
     -webkit-line-clamp: 3;
   }
+}
+.board-viewers-badge > span[aria-hidden="true"] {
+  display: none;
 }
