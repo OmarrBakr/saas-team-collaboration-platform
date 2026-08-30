@@ -3,6 +3,7 @@
 // original request. If the refresh also fails we redirect to /login.
 
 let refreshPromise = null;
+const API_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 const getCookie = (name) =>
   document.cookie
@@ -14,7 +15,7 @@ const ensureCsrfToken = async () => {
   let token = getCookie('csrfToken');
 
   if (!token) {
-    const response = await fetch('/api/v1/auth/csrf-token', {
+    const response = await fetch(`${API_URL}/api/v1/auth/csrf-token`, {
       credentials: 'include',
     });
     const data = await response.json();
@@ -41,7 +42,7 @@ export const request = async (path, options = {}) => {
     requestHeaders['X-CSRF-Token'] = await ensureCsrfToken();
   }
 
-  const res = await fetch(path, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...fetchOptions,
     headers: requestHeaders,
     credentials: 'include',
@@ -60,7 +61,7 @@ export const request = async (path, options = {}) => {
   if (res.status === 401 && !isAuthEndpoint) {
     if (!refreshPromise) {
       refreshPromise = ensureCsrfToken().then((csrfToken) =>
-        fetch('/api/v1/auth/refresh', {
+        fetch(`${API_URL}/api/v1/auth/refresh`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'X-CSRF-Token': csrfToken },
