@@ -2,6 +2,7 @@ import { io } from 'socket.io-client';
 
 let socket;
 const activeBoardPresence = new Map();
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
 
 const requestBoardPresence = (boardId) => {
   const normalizedBoardId = boardId?.toString();
@@ -18,7 +19,7 @@ const requestBoardPresence = (boardId) => {
 
 export const connectSocket = () => {
   if (!socket) {
-    socket = io(window.location.origin, {
+    socket = io(SOCKET_URL, {
       withCredentials: true,
       autoConnect: false,
     });
