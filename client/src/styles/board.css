@@ -503,3 +503,25 @@
 .board-viewers-badge > span[aria-hidden="true"] {
   display: none;
 }
+
+html {
+  scrollbar-color: #94a3b8 transparent;
+  scrollbar-width: thin;
+}
+
+html::-webkit-scrollbar {
+  width: 8px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 999px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
