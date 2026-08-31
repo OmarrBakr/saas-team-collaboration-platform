@@ -66,8 +66,27 @@
   align-items: flex-start;
   gap: 1rem;
   overflow-x: auto;
-  padding-bottom: 0.5rem;
+  padding-bottom: 1rem;
   scroll-snap-type: x proximity;
+  scrollbar-color: #94a3b8 transparent;
+  scrollbar-width: thin;
+}
+
+.board-columns::-webkit-scrollbar {
+  height: 8px;
+}
+
+.board-columns::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.board-columns::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 999px;
+}
+
+.board-columns::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 .board-empty-state {
@@ -140,9 +159,13 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  flex-shrink: 0;
 }
 
 .board-list-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   user-select: none;
 }
 
