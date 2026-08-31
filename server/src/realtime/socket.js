@@ -5,29 +5,31 @@ const { createAdapter } = require('@socket.io/redis-adapter');
 const Board = require('../models/Board');
 const Workspace = require('../models/Workspace');
 const redis = require('../utils/redis');
+const logger = require('../utils/logger');
 
-const globalPresence = new Map();
-const boardPresence = new Map();
 const globalPresenceKey = 'presence:global';
 const boardPresenceKey = (boardId) => `presence:board:${boardId}`;
+const isRedisAvailable = () => Boolean(redis?.isReady);
 
 const createSocketEventLimiter = ({ windowMs, max }) => {
-  const eventsByKey = new Map();
+  return async (key) => {
+    if (!isRedisAvailable()) return false;
 
-  return (key) => {
-    const now = Date.now();
-    const timestamps = (eventsByKey.get(key) || []).filter(
-      (timestamp) => now - timestamp < windowMs
-    );
+    try {
+      const redisKey = `socket-rate-limit:${key}`;
+      const requestCount = await redis.incr(redisKey);
 
-    if (timestamps.length >= max) {
-      eventsByKey.set(key, timestamps);
+      if (requestCount === 1) {
+        await redis.expire(redisKey, Math.ceil(windowMs / 1000));
+      }
+
+      return requestCount <= max;
+    } catch (error) {
+      logger.error('socket_rate_limit.redis_failed', {
+        error: logger.serializeError(error),
+      });
       return false;
     }
-
-    timestamps.push(now);
-    eventsByKey.set(key, timestamps);
-    return true;
   };
 };
 
@@ -35,6 +37,14 @@ const isPresenceEventAllowed = createSocketEventLimiter({
   windowMs: 60 * 1000,
   max: 30,
 });
+
+const logPresenceRateLimitExceeded = (socket, event) => {
+  logger.warn('socket_rate_limit.exceeded', {
+    userId: socket.user.userId,
+    socketId: socket.id,
+    socketEvent: event,
+  });
+};
 
 const parseCookies = (cookieHeader = '') =>
   cookieHeader.split(';').reduce((cookies, cookie) => {
@@ -48,9 +58,7 @@ const parseCookies = (cookieHeader = '') =>
   }, {});
 
 const emitGlobalPresence = async (io) => {
-  const userIds = redis
-    ? await redis.hKeys(globalPresenceKey)
-    : [...globalPresence.keys()];
+  const userIds = isRedisAvailable() ? await redis.hKeys(globalPresenceKey) : [];
 
   io.emit('presence:global:updated', {
     userIds,
@@ -58,9 +66,7 @@ const emitGlobalPresence = async (io) => {
 };
 
 const emitBoardPresence = async (io, boardId) => {
-  const userIds = redis
-    ? await redis.hKeys(boardPresenceKey(boardId))
-    : [...(boardPresence.get(boardId)?.keys() || [])];
+  const userIds = isRedisAvailable() ? await redis.hKeys(boardPresenceKey(boardId)) : [];
 
   io.to(`board:${boardId}`).emit('board:presence:updated', {
     boardId,
@@ -69,56 +75,26 @@ const emitBoardPresence = async (io, boardId) => {
 };
 
 const addGlobalPresence = async (userId) => {
-  if (redis) {
-    await redis.hIncrBy(globalPresenceKey, userId, 1);
-    return;
-  }
-
-  globalPresence.set(userId, (globalPresence.get(userId) || 0) + 1);
+  if (isRedisAvailable()) await redis.hIncrBy(globalPresenceKey, userId, 1);
 };
 
 const removeGlobalPresence = async (userId) => {
-  if (redis) {
+  if (isRedisAvailable()) {
     const count = await redis.hIncrBy(globalPresenceKey, userId, -1);
     if (count <= 0) await redis.hDel(globalPresenceKey, userId);
-    return;
-  }
-
-  const connectionCount = (globalPresence.get(userId) || 0) - 1;
-  if (connectionCount > 0) {
-    globalPresence.set(userId, connectionCount);
-  } else {
-    globalPresence.delete(userId);
   }
 };
 
 const addBoardPresence = async (boardId, userId) => {
-  if (redis) {
-    await redis.hIncrBy(boardPresenceKey(boardId), userId, 1);
-    return;
-  }
-
-  if (!boardPresence.has(boardId)) boardPresence.set(boardId, new Map());
-  const users = boardPresence.get(boardId);
-  users.set(userId, (users.get(userId) || 0) + 1);
+  if (isRedisAvailable()) await redis.hIncrBy(boardPresenceKey(boardId), userId, 1);
 };
 
 const removeBoardPresence = async (boardId, userId) => {
-  if (redis) {
+  if (isRedisAvailable()) {
     const key = boardPresenceKey(boardId);
     const count = await redis.hIncrBy(key, userId, -1);
     if (count <= 0) await redis.hDel(key, userId);
-    return;
   }
-
-  const users = boardPresence.get(boardId);
-  if (!users) return;
-
-  const connectionCount = (users.get(userId) || 0) - 1;
-  if (connectionCount > 0) users.set(userId, connectionCount);
-  else users.delete(userId);
-
-  if (!users.size) boardPresence.delete(boardId);
 };
 
 const setupSocket = async (httpServer) => {
@@ -129,11 +105,20 @@ const setupSocket = async (httpServer) => {
     },
   });
 
-  if (redis) {
-    const pubClient = redis.duplicate();
-    const subClient = redis.duplicate();
-    await Promise.all([pubClient.connect(), subClient.connect()]);
-    io.adapter(createAdapter(pubClient, subClient));
+  if (isRedisAvailable()) {
+    try {
+      const pubClient = redis.duplicate();
+      const subClient = redis.duplicate();
+      await Promise.all([pubClient.connect(), subClient.connect()]);
+      io.adapter(createAdapter(pubClient, subClient));
+      logger.info('socket.redis_adapter.connected', { database: 'redis' });
+    } catch (error) {
+      logger.error('socket.redis_adapter.failed', {
+        error: logger.serializeError(error),
+      });
+    }
+  } else {
+    logger.warn('socket.redis_adapter.unavailable');
   }
 
   io.use((socket, next) => {
@@ -158,7 +143,8 @@ const setupSocket = async (httpServer) => {
     await emitGlobalPresence(io);
 
     socket.on('presence:join-board', async (boardId, acknowledge) => {
-      if (!isPresenceEventAllowed(`${socket.user.userId}:presence:join-board`)) {
+      if (!(await isPresenceEventAllowed(`${socket.user.userId}:presence:join-board`))) {
+        logPresenceRateLimitExceeded(socket, 'presence:join-board');
         acknowledge?.({ ok: false, code: 'RATE_LIMITED', message: 'Too many board presence requests' });
         return;
       }
@@ -197,9 +183,9 @@ const setupSocket = async (httpServer) => {
         acknowledge?.({
           ok: true,
           boardId: normalizedBoardId,
-          userIds: redis
+          userIds: isRedisAvailable()
             ? await redis.hKeys(boardPresenceKey(normalizedBoardId))
-            : [...(boardPresence.get(normalizedBoardId)?.keys() || [])],
+            : [],
         });
       } catch (error) {
         acknowledge?.({ ok: false, message: error.message });
@@ -207,7 +193,8 @@ const setupSocket = async (httpServer) => {
     });
 
     socket.on('presence:leave-board', async (boardId, acknowledge) => {
-      if (!isPresenceEventAllowed(`${socket.user.userId}:presence:leave-board`)) {
+      if (!(await isPresenceEventAllowed(`${socket.user.userId}:presence:leave-board`))) {
+        logPresenceRateLimitExceeded(socket, 'presence:leave-board');
         acknowledge?.({ ok: false, code: 'RATE_LIMITED', message: 'Too many board presence requests' });
         return;
       }

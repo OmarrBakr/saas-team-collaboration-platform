@@ -36,6 +36,7 @@ const notFoundMiddleware = require('./middleware/not-found');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const authenticationMiddleware = require('./middleware/authentication');
 const setupSocket = require('./realtime/socket');
+const redis = require('./utils/redis');
 const { apiLimiter } = require('./middleware/rate-limit');
 const logger = require('./utils/logger');
 
@@ -62,6 +63,7 @@ app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
 
 const startServer = async () => {
+  await redis.connectRedis();
   await connectDB();
 
   const httpServer = http.createServer(app);
