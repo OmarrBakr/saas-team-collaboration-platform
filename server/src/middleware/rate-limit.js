@@ -31,7 +31,7 @@ const createLimiter = ({ name, windowMs, limit, message, keyGenerator }) =>
       ? {
           store: new RedisStore({
             prefix: `rate-limit:${name}:`,
-            sendCommand: (...args) => redis.sendCommand(args),
+            sendCommand: (...args) => redis.redisReady.then(() => redis.sendCommand(args)),
           }),
         }
       : {}),

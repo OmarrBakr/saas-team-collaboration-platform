@@ -63,7 +63,7 @@ app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
 
 const startServer = async () => {
-  await redis.connectRedis();
+  await redis.redisReady;
   await connectDB();
 
   const httpServer = http.createServer(app);

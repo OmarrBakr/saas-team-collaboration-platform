@@ -49,6 +49,9 @@ const connectRedis = async () => {
   return redis;
 };
 
+const redisReady = connectRedis();
+redis.redisReady = redisReady;
+
 module.exports = redis;
 module.exports.createRedisClient = createRedisClient;
 module.exports.connectRedis = connectRedis;
