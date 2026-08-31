@@ -75,6 +75,7 @@
 }
 
 .board-create-list-btn {
+  cursor: pointer;
   min-width: 9rem;
   align-self: flex-start;
   border: 1px dashed rgba(155, 175, 255, 0.3);
