@@ -1,11 +1,15 @@
 const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
+const { createAdapter } = require('@socket.io/redis-adapter');
 
 const Board = require('../models/Board');
 const Workspace = require('../models/Workspace');
+const redis = require('../utils/redis');
 
 const globalPresence = new Map();
 const boardPresence = new Map();
+const globalPresenceKey = 'presence:global';
+const boardPresenceKey = (boardId) => `presence:board:${boardId}`;
 
 const createSocketEventLimiter = ({ windowMs, max }) => {
   const eventsByKey = new Map();
@@ -43,24 +47,43 @@ const parseCookies = (cookieHeader = '') =>
     return cookies;
   }, {});
 
-const emitGlobalPresence = (io) => {
+const emitGlobalPresence = async (io) => {
+  const userIds = redis
+    ? await redis.hKeys(globalPresenceKey)
+    : [...globalPresence.keys()];
+
   io.emit('presence:global:updated', {
-    userIds: [...globalPresence.keys()],
+    userIds,
   });
 };
 
-const emitBoardPresence = (io, boardId) => {
+const emitBoardPresence = async (io, boardId) => {
+  const userIds = redis
+    ? await redis.hKeys(boardPresenceKey(boardId))
+    : [...(boardPresence.get(boardId)?.keys() || [])];
+
   io.to(`board:${boardId}`).emit('board:presence:updated', {
     boardId,
-    userIds: [...(boardPresence.get(boardId)?.keys() || [])],
+    userIds,
   });
 };
 
-const addGlobalPresence = (userId) => {
+const addGlobalPresence = async (userId) => {
+  if (redis) {
+    await redis.hIncrBy(globalPresenceKey, userId, 1);
+    return;
+  }
+
   globalPresence.set(userId, (globalPresence.get(userId) || 0) + 1);
 };
 
-const removeGlobalPresence = (userId) => {
+const removeGlobalPresence = async (userId) => {
+  if (redis) {
+    const count = await redis.hIncrBy(globalPresenceKey, userId, -1);
+    if (count <= 0) await redis.hDel(globalPresenceKey, userId);
+    return;
+  }
+
   const connectionCount = (globalPresence.get(userId) || 0) - 1;
   if (connectionCount > 0) {
     globalPresence.set(userId, connectionCount);
@@ -69,13 +92,25 @@ const removeGlobalPresence = (userId) => {
   }
 };
 
-const addBoardPresence = (boardId, userId) => {
+const addBoardPresence = async (boardId, userId) => {
+  if (redis) {
+    await redis.hIncrBy(boardPresenceKey(boardId), userId, 1);
+    return;
+  }
+
   if (!boardPresence.has(boardId)) boardPresence.set(boardId, new Map());
   const users = boardPresence.get(boardId);
   users.set(userId, (users.get(userId) || 0) + 1);
 };
 
-const removeBoardPresence = (boardId, userId) => {
+const removeBoardPresence = async (boardId, userId) => {
+  if (redis) {
+    const key = boardPresenceKey(boardId);
+    const count = await redis.hIncrBy(key, userId, -1);
+    if (count <= 0) await redis.hDel(key, userId);
+    return;
+  }
+
   const users = boardPresence.get(boardId);
   if (!users) return;
 
@@ -86,13 +121,20 @@ const removeBoardPresence = (boardId, userId) => {
   if (!users.size) boardPresence.delete(boardId);
 };
 
-const setupSocket = (httpServer) => {
+const setupSocket = async (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
       origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
       credentials: true,
     },
   });
+
+  if (redis) {
+    const pubClient = redis.duplicate();
+    const subClient = redis.duplicate();
+    await Promise.all([pubClient.connect(), subClient.connect()]);
+    io.adapter(createAdapter(pubClient, subClient));
+  }
 
   io.use((socket, next) => {
     try {
@@ -108,12 +150,12 @@ const setupSocket = (httpServer) => {
     }
   });
 
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     socket.joinedBoards = new Set();
     socket.boardPresenceVersions = new Map();
     socket.join(`user:${socket.user.userId}`);
     addGlobalPresence(socket.user.userId);
-    emitGlobalPresence(io);
+    await emitGlobalPresence(io);
 
     socket.on('presence:join-board', async (boardId, acknowledge) => {
       if (!isPresenceEventAllowed(`${socket.user.userId}:presence:join-board`)) {
@@ -148,21 +190,23 @@ const setupSocket = (httpServer) => {
         if (!socket.joinedBoards.has(normalizedBoardId)) {
           socket.join(`board:${normalizedBoardId}`);
           socket.joinedBoards.add(normalizedBoardId);
-          addBoardPresence(normalizedBoardId, socket.user.userId);
-          emitBoardPresence(io, normalizedBoardId);
+          await addBoardPresence(normalizedBoardId, socket.user.userId);
+          await emitBoardPresence(io, normalizedBoardId);
         }
 
         acknowledge?.({
           ok: true,
           boardId: normalizedBoardId,
-          userIds: [...(boardPresence.get(normalizedBoardId)?.keys() || [])],
+          userIds: redis
+            ? await redis.hKeys(boardPresenceKey(normalizedBoardId))
+            : [...(boardPresence.get(normalizedBoardId)?.keys() || [])],
         });
       } catch (error) {
         acknowledge?.({ ok: false, message: error.message });
       }
     });
 
-    socket.on('presence:leave-board', (boardId, acknowledge) => {
+    socket.on('presence:leave-board', async (boardId, acknowledge) => {
       if (!isPresenceEventAllowed(`${socket.user.userId}:presence:leave-board`)) {
         acknowledge?.({ ok: false, code: 'RATE_LIMITED', message: 'Too many board presence requests' });
         return;
@@ -180,19 +224,19 @@ const setupSocket = (httpServer) => {
 
       socket.leave(`board:${normalizedBoardId}`);
       socket.joinedBoards.delete(normalizedBoardId);
-      removeBoardPresence(normalizedBoardId, socket.user.userId);
-      emitBoardPresence(io, normalizedBoardId);
+      await removeBoardPresence(normalizedBoardId, socket.user.userId);
+      await emitBoardPresence(io, normalizedBoardId);
 
       acknowledge?.({ ok: true, boardId: normalizedBoardId, joined: false });
 
     });
 
-    socket.on('disconnect', () => {
-      removeGlobalPresence(socket.user.userId);
-      emitGlobalPresence(io);
+    socket.on('disconnect', async () => {
+      await removeGlobalPresence(socket.user.userId);
+      await emitGlobalPresence(io);
       for (const boardId of socket.joinedBoards) {
-        removeBoardPresence(boardId, socket.user.userId);
-        emitBoardPresence(io, boardId);
+        await removeBoardPresence(boardId, socket.user.userId);
+        await emitBoardPresence(io, boardId);
       }
       socket.joinedBoards.clear();
       socket.boardPresenceVersions.clear();

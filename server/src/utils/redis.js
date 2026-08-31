@@ -1,4 +1,11 @@
 const { createClient } = require('redis');
+const logger = require('./logger');
+
+const createRedisClient = () => {
+  if (!process.env.REDIS_URL) return null;
+
+  return createClient({ url: process.env.REDIS_URL });
+};
 
 const redis = process.env.REDIS_URL
   ? createClient({ url: process.env.REDIS_URL })
@@ -6,12 +13,16 @@ const redis = process.env.REDIS_URL
 
 if (redis) {
   redis.on('error', (error) => {
-    console.error('Redis error:', error.message);
+    logger.error('redis.error', { error: logger.serializeError(error) });
   });
 
-  redis.connect().catch((error) => {
-    console.error('Redis connection failed:', error.message);
-  });
+  redis
+    .connect()
+    .then(() => logger.info('redis.connected', { database: 'redis' }))
+    .catch((error) => logger.error('redis.connection_failed', {
+      error: logger.serializeError(error),
+    }));
 }
 
 module.exports = redis;
+module.exports.createRedisClient = createRedisClient;
