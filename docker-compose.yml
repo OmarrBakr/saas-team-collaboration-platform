@@ -7,6 +7,15 @@ services:
     volumes:
       - flowvia-mongodb:/data/db
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - flowvia-redis:/data
+    command: redis-server --appendonly yes
+
   server:
     build:
       context: ./server
@@ -19,8 +28,11 @@ services:
       MONGO_URI: mongodb://mongodb:27017/flowvia
       CLIENT_ORIGIN: http://localhost:5173
       PORT: 3000
+      REDIS_URL: redis://redis:6379
     depends_on:
       - mongodb
+      - redis
 
 volumes:
   flowvia-mongodb:
+  flowvia-redis:

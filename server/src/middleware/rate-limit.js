@@ -1,5 +1,7 @@
 const rateLimit = require('express-rate-limit');
+const { RedisStore } = require('rate-limit-redis');
 const logger = require('../utils/logger');
+const redis = require('../utils/redis');
 
 const logRateLimitExceeded = ({ name }) => (req, res, next, options) => {
   const ip = req.ip || 'unknown';
@@ -25,6 +27,14 @@ const createLimiter = ({ name, windowMs, limit, message, keyGenerator }) =>
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     message: { msg: message },
+    ...(redis
+      ? {
+          store: new RedisStore({
+            prefix: `rate-limit:${name}:`,
+            sendCommand: (...args) => redis.sendCommand(args),
+          }),
+        }
+      : {}),
   });
 
 const apiLimiter = createLimiter({
