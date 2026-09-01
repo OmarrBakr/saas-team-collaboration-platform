@@ -10,6 +10,7 @@ const {
   UnauthorizedError,
 } = require('../errors');
 const createHash = require('../utils/createHash');
+const redis = require('../utils/redis');
 const sendInvitationEmail = require('../utils/sendInvitationEmail');
 const isAllowedCloudinaryUrl = require('../utils/isAllowedCloudinaryUrl');
 const {
@@ -21,6 +22,9 @@ const { createWorkspaceNotifications } = require('../services/notifications');
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const INVITATION_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
+const WORKSPACE_CACHE_TTL_SECONDS = 60;
+const workspaceCacheKey = (workspaceId) => `cache:workspace:${workspaceId}`;
+const invalidateWorkspaceCache = (workspaceId) => redis.del(workspaceCacheKey(workspaceId));
 
 const assertWorkspaceHasNoBoards = async (workspaceId) => {
   const boardCount = await Board.countDocuments({ workspace: workspaceId });
@@ -72,6 +76,13 @@ const getMyWorkspaces = async (req, res) => {
  * Get a single workspace. Membership is enforced by requireWorkspaceMember middleware.
  */
 const getWorkspace = async (req, res) => {
+  const cacheKey = workspaceCacheKey(req.workspace._id);
+  const cachedWorkspace = await redis.get(cacheKey);
+
+  if (cachedWorkspace) {
+    return res.status(StatusCodes.OK).json({ workspace: JSON.parse(cachedWorkspace) });
+  }
+
   const workspace = await Workspace.findById(req.workspace._id)
     .populate('members.user', 'firstName lastName email')
     .populate('invitations.invitedBy', 'firstName lastName email');
@@ -90,6 +101,9 @@ const getWorkspace = async (req, res) => {
       .map(({ token, ...rest }) => rest);
   }
 
+  await redis.set(cacheKey, JSON.stringify(workspaceData), {
+    EX: WORKSPACE_CACHE_TTL_SECONDS,
+  });
   res.status(StatusCodes.OK).json({ workspace: workspaceData });
 };
 
@@ -109,6 +123,7 @@ const updateWorkspace = async (req, res) => {
   if (description !== undefined) workspace.description = description;
 
   await workspace.save();
+  await invalidateWorkspaceCache(workspace._id);
 
   res.status(StatusCodes.OK).json({ workspace });
 };
@@ -131,6 +146,7 @@ const uploadWorkspaceLogo = async (req, res) => {
 
   workspace.logo = result.secure_url;
   await workspace.save();
+  await invalidateWorkspaceCache(workspace._id);
 
   res.status(StatusCodes.OK).json({ workspace });
 };
@@ -146,6 +162,7 @@ const removeWorkspaceLogo = async (req, res) => {
     await cloudinaryDeleteLogo(workspace._id);
     workspace.logo = '';
     await workspace.save();
+    await invalidateWorkspaceCache(workspace._id);
   }
 
   res.status(StatusCodes.OK).json({ workspace });
@@ -168,6 +185,7 @@ const deleteWorkspace = async (req, res) => {
 
   await assertWorkspaceHasNoBoards(workspace._id);
   await workspace.deleteOne();
+  await invalidateWorkspaceCache(workspace._id);
 
   res.status(StatusCodes.OK).json({ msg: 'Workspace deleted successfully' });
 };
@@ -239,6 +257,7 @@ const updateMemberRole = async (req, res) => {
 
   memberEntry.role = role;
   await workspace.save();
+  await invalidateWorkspaceCache(workspace._id);
 
   res.status(StatusCodes.OK).json({ msg: 'Member role updated', member: memberEntry });
 };
@@ -292,6 +311,7 @@ const removeMember = async (req, res) => {
   );
 
   await workspace.save();
+  await invalidateWorkspaceCache(workspace._id);
 
   await createWorkspaceNotifications({
     io: req.app.get('io'),
@@ -347,6 +367,7 @@ const leaveWorkspace = async (req, res) => {
   }
 
   await workspace.save();
+  await invalidateWorkspaceCache(workspace._id);
 
   res.status(StatusCodes.OK).json({ msg: 'You have left the workspace', deleted: false });
 };
@@ -405,6 +426,7 @@ const inviteMember = async (req, res) => {
   });
 
   await workspace.save();
+  await invalidateWorkspaceCache(workspace._id);
 
   // Fetch inviter's name for the email
   const inviter = await User.findById(userId).select('firstName lastName');
@@ -507,6 +529,7 @@ const acceptInvitation = async (req, res) => {
   );
 
   await workspace.save();
+  await invalidateWorkspaceCache(workspace._id);
 
   const invitedUserName = `${invitedUser.firstName} ${invitedUser.lastName}`.trim() || invitedUser.email;
   await createWorkspaceNotifications({

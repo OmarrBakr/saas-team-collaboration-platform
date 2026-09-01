@@ -8,12 +8,15 @@ const { BadRequestError, NotFoundError } = require('../errors');
 
 const MAX_ATTACHMENTS_PER_CARD = 10;
 const MAX_WORKSPACE_ATTACHMENT_BYTES = 1024 * 1024 * 1024;
+const BOARD_CACHE_TTL_SECONDS = 60;
+const boardCacheKey = (boardId) => `cache:board:${boardId}`;
 const {
   uploadCardAttachment: cloudinaryUploadCardAttachment,
   deleteCardAttachment: cloudinaryDeleteCardAttachment,
 } = require('../utils/cloudinary');
 const { emitBoardEvent } = require('../realtime/socket');
 const isAllowedCloudinaryUrl = require('../utils/isAllowedCloudinaryUrl');
+const redis = require('../utils/redis');
 const {
   createCardActivityNotifications,
   createCardAssignmentNotifications,
@@ -25,6 +28,8 @@ const broadcastBoardEvent = (req, eventName, board, payload) => {
     ...payload,
   });
 };
+
+const invalidateBoardCache = (boardId) => redis.del(boardCacheKey(boardId));
 
 const getBoardByWorkspace = async (boardId, workspaceId) => {
   const board = await Board.findOne({
@@ -174,6 +179,13 @@ const createBoard = async (req, res) => {
 };
 
 const getBoard = async (req, res) => {
+  const cacheKey = boardCacheKey(req.params.boardId);
+  const cachedBoard = await redis.get(cacheKey);
+
+  if (cachedBoard) {
+    return res.status(StatusCodes.OK).json({ board: JSON.parse(cachedBoard) });
+  }
+
   const board = await Board.findOne({
     _id: req.params.boardId,
     workspace: req.workspace._id,
@@ -183,6 +195,7 @@ const getBoard = async (req, res) => {
     throw new NotFoundError('Board not found');
   }
 
+  await redis.set(cacheKey, JSON.stringify(board), { EX: BOARD_CACHE_TTL_SECONDS });
   res.status(StatusCodes.OK).json({ board });
 };
 
@@ -199,6 +212,7 @@ const updateBoard = async (req, res) => {
   if (description !== undefined) board.description = description;
 
   await board.save();
+  await invalidateBoardCache(board._id);
   broadcastBoardEvent(req, 'board:updated', board);
 
   res.status(StatusCodes.OK).json({ board });
@@ -235,6 +249,7 @@ const addColumn = async (req, res) => {
   });
 
   await board.save();
+  await invalidateBoardCache(board._id);
   broadcastBoardEvent(req, 'list:created', board);
   res.status(StatusCodes.OK).json({ board });
 };
@@ -263,6 +278,7 @@ const addCard = async (req, res) => {
   });
 
   await board.save();
+  await invalidateBoardCache(board._id);
   broadcastBoardEvent(req, 'card:created', board);
   res.status(StatusCodes.CREATED).json({ board });
 };
@@ -283,6 +299,7 @@ const updateColumn = async (req, res) => {
 
   column.title = title;
   await board.save();
+  await invalidateBoardCache(board._id);
   broadcastBoardEvent(req, 'list:updated', board);
 
   res.status(StatusCodes.OK).json({ board });
@@ -307,6 +324,7 @@ const deleteColumn = async (req, res) => {
   });
 
   await board.save();
+  await invalidateBoardCache(board._id);
   broadcastBoardEvent(req, 'list:deleted', board);
   res.status(StatusCodes.OK).json({ msg: 'List deleted successfully', board });
 };
@@ -343,6 +361,7 @@ const moveColumn = async (req, res) => {
   });
 
   await board.save();
+  await invalidateBoardCache(board._id);
   broadcastBoardEvent(req, 'list:moved', board);
   res.status(StatusCodes.OK).json({ board });
 };
@@ -404,6 +423,7 @@ const updateCard = async (req, res) => {
   }
 
   await board.save();
+  await invalidateBoardCache(board._id);
   if (assignees !== undefined) {
     await createCardAssignmentNotifications({
       io: req.app.get('io'),
@@ -522,6 +542,7 @@ const uploadCardAttachment = async (req, res) => {
   });
 
   await board.save();
+  await invalidateBoardCache(board._id);
 
   res.status(StatusCodes.OK).json({ board });
 };
@@ -543,6 +564,7 @@ const deleteCardAttachment = async (req, res) => {
   );
   card.attachments.pull(attachmentId);
   await board.save();
+  await invalidateBoardCache(board._id);
 
   res.status(StatusCodes.OK).json({ board });
 };
@@ -596,6 +618,7 @@ const moveCard = async (req, res) => {
   normalizeCards(toColumn.cards);
 
   await board.save();
+  await invalidateBoardCache(board._id);
   if (fromColumnId !== toColumnId) {
     await createCardActivityNotifications({
       io: req.app.get('io'),
