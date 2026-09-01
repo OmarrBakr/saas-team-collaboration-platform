@@ -13,6 +13,7 @@ const {
   deleteCardAttachment: cloudinaryDeleteCardAttachment,
 } = require('../utils/cloudinary');
 const { emitBoardEvent } = require('../realtime/socket');
+const isAllowedCloudinaryUrl = require('../utils/isAllowedCloudinaryUrl');
 const {
   createCardActivityNotifications,
   createCardAssignmentNotifications,
@@ -505,6 +506,10 @@ const uploadCardAttachment = async (req, res) => {
     card._id,
     req.file.originalname
   );
+
+  if (!isAllowedCloudinaryUrl(result.secure_url)) {
+    throw new BadRequestError('Invalid attachment URL');
+  }
 
   card.attachments.push({
     title: req.file.originalname,

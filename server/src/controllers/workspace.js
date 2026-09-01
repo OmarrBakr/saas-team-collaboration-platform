@@ -11,6 +11,7 @@ const {
 } = require('../errors');
 const createHash = require('../utils/createHash');
 const sendInvitationEmail = require('../utils/sendInvitationEmail');
+const isAllowedCloudinaryUrl = require('../utils/isAllowedCloudinaryUrl');
 const {
   uploadWorkspaceLogo: cloudinaryUploadLogo,
   deleteWorkspaceLogo: cloudinaryDeleteLogo,
@@ -124,6 +125,9 @@ const uploadWorkspaceLogo = async (req, res) => {
 
   const workspace = req.workspace;
   const result = await cloudinaryUploadLogo(req.file.buffer, workspace._id);
+  if (!isAllowedCloudinaryUrl(result.secure_url)) {
+    throw new BadRequestError('Invalid workspace logo URL');
+  }
 
   workspace.logo = result.secure_url;
   await workspace.save();
