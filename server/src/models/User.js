@@ -95,6 +95,10 @@ UserSchema.methods.createRefreshToken = function () {
 };
 
 UserSchema.methods.comparePassword = async function (candidatePassword) {
+  if (!candidatePassword || !this.password) {
+    return false;
+  }
+
   const isMatch = await bcrypt.compare(candidatePassword, this.password);
   return isMatch;
 };
