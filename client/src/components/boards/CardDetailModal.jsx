@@ -186,7 +186,7 @@ export default function CardDetailModal({
                 <div className="board-attachment-list">
                   {card.attachments.map((attachment) => (
                     <div key={attachment._id} className="board-attachment-row">
-                      <a href={attachment.url} target="_blank" rel="noreferrer">
+                      <a href={attachment.url} target="_blank" rel="noopener noreferrer">
                         {attachment.title}
                       </a>
                       {isAdmin && (
