@@ -451,6 +451,34 @@
   padding: 0.25rem 0.1rem 0;
 }
 
+.project-assistant {
+  display: grid;
+  gap: 1rem;
+  max-width: 52rem;
+  padding: 1.25rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.project-assistant h2 { margin: 0.25rem 0 0; }
+.project-assistant-form { display: grid; gap: 0.75rem; }
+.project-assistant-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font: inherit;
+}
+.project-assistant-form button { justify-self: start; }
+.project-assistant-answer { padding: 1rem; border-radius: 16px; background: rgba(159, 182, 255, 0.1); }
+.project-assistant-answer p { white-space: pre-wrap; line-height: 1.6; margin: 0.5rem 0 0; }
+
 @media (max-width: 960px) {
   .board-action-group {
     margin-left: 0;

@@ -4,6 +4,7 @@ import useBoardPage from "../hooks/useBoardPage";
 import BoardHeader from "../components/boards/BoardHeader";
 import BoardColumns from "../components/boards/BoardColumns";
 import BoardModals from "../components/boards/BoardModals";
+import ProjectAssistant from "../components/boards/ProjectAssistant";
 import "../styles/dashboard.css";
 import "../styles/workspace.css";
 import "../styles/board.css";
@@ -138,6 +139,7 @@ export default function BoardPage() {
           {...columnProps}
         />
       </section>
+      <ProjectAssistant workspaceId={workspaceId} boardId={boardId} />
       <section className="board-footer-note">
         <p className="workspace-empty-copy">
           You are viewing this board as{" "}

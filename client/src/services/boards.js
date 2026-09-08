@@ -9,6 +9,12 @@ export const updateBoard = (workspaceId, boardId, payload) =>
     body: JSON.stringify(payload),
   });
 
+export const askProjectAssistant = (workspaceId, boardId, question) =>
+  request(`/api/v1/workspaces/${workspaceId}/boards/${boardId}/assistant`, {
+    method: 'POST',
+    body: JSON.stringify({ question }),
+  });
+
 export const createBoard = (workspaceId, payload) =>
   request(`/api/v1/workspaces/${workspaceId}/boards`, {
     method: 'POST',

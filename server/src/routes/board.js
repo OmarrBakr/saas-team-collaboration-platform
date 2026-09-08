@@ -25,6 +25,7 @@ const {
   deleteCardAttachment,
   moveCard,
 } = require('../controllers/board');
+const { askProjectAssistant } = require('../controllers/assistant');
 
 const router = express.Router({ mergeParams: true });
 
@@ -33,6 +34,7 @@ router.use(requireWorkspaceMember);
 router.get('/', getWorkspaceBoards);
 router.post('/', requireWorkspaceRole('admin'), createBoard);
 router.get('/:boardId', getBoard);
+router.post('/:boardId/assistant', askProjectAssistant);
 router.patch('/:boardId', requireWorkspaceRole('admin'), updateBoard);
 router.delete('/:boardId', requireWorkspaceRole('admin'), deleteBoard);
 router.post('/:boardId/columns', requireWorkspaceRole('admin'), addColumn);
