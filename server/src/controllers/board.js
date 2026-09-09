@@ -17,10 +17,25 @@ const {
 const { emitBoardEvent } = require('../realtime/socket');
 const isAllowedCloudinaryUrl = require('../utils/isAllowedCloudinaryUrl');
 const redis = require('../utils/redis');
+const logger = require('../utils/logger');
 const {
   createCardActivityNotifications,
   createCardAssignmentNotifications,
 } = require('../services/notifications');
+const { upsertCardEmbedding, deleteCardEmbedding } = require('../services/cardEmbeddings');
+
+const queueCardEmbedding = (board, column, card) => {
+  void upsertCardEmbedding({
+    workspaceId: board.workspace,
+    boardId: board._id,
+    boardName: board.name,
+    columnName: column.title,
+    card,
+  }).catch((error) => logger.error('assistant.embedding_failed', {
+    cardId: card._id?.toString?.(),
+    error: logger.serializeError(error),
+  }));
+};
 
 const broadcastBoardEvent = (req, eventName, board, payload) => {
   emitBoardEvent(req.app.get('io'), eventName, board, {
@@ -278,6 +293,7 @@ const addCard = async (req, res) => {
   });
 
   await board.save();
+  queueCardEmbedding(board, column, column.cards[column.cards.length - 1]);
   await invalidateBoardCache(board._id);
   broadcastBoardEvent(req, 'card:created', board);
   res.status(StatusCodes.CREATED).json({ board });
@@ -423,6 +439,7 @@ const updateCard = async (req, res) => {
   }
 
   await board.save();
+  queueCardEmbedding(board, sourceColumn, card);
   await invalidateBoardCache(board._id);
   if (assignees !== undefined) {
     await createCardAssignmentNotifications({
@@ -471,6 +488,9 @@ const deleteCard = async (req, res) => {
       const cardData = card.toObject();
       column.cards.pull(req.params.cardId);
       await board.save();
+      void deleteCardEmbedding(req.params.cardId).catch((error) =>
+        logger.error('assistant.embedding_delete_failed', { error: logger.serializeError(error) })
+      );
       await createCardActivityNotifications({
         io: req.app.get('io'),
         actorId: req.user.userId,
@@ -542,6 +562,7 @@ const uploadCardAttachment = async (req, res) => {
   });
 
   await board.save();
+  queueCardEmbedding(board, toColumn, card);
   await invalidateBoardCache(board._id);
 
   res.status(StatusCodes.OK).json({ board });

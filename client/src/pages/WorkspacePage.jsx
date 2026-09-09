@@ -10,6 +10,7 @@ import WorkspaceHeaderSection from '../components/workspaces/WorkspaceHeaderSect
 import WorkspaceBoardsSection from '../components/workspaces/WorkspaceBoardsSection';
 import WorkspaceMembersSection from '../components/workspaces/WorkspaceMembersSection';
 import CreateBoardModal from '../components/workspaces/CreateBoardModal';
+import WorkspaceAssistant from '../components/workspaces/WorkspaceAssistant';
 import '../styles/dashboard.css';
 import '../styles/workspace.css';
 import '../styles/board.css';
@@ -128,6 +129,8 @@ export default function WorkspacePage() {
       />
 
       {error && <div className="dashboard-alert">{error}</div>}
+
+      <WorkspaceAssistant workspaceId={workspaceId} />
 
       <section className="workspace-grid">
         <WorkspaceBoardsSection

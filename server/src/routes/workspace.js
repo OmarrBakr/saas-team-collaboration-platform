@@ -26,6 +26,7 @@ const {
   inviteMember,
   acceptInvitation,
 } = require('../controllers/workspace');
+const { askWorkspaceAssistant, indexWorkspaceCards } = require('../controllers/assistant');
 
 const router = express.Router();
 
@@ -34,6 +35,8 @@ router.post('/', createWorkspace);
 router.post('/invite/accept', acceptInvitation);
 
 router.get('/:workspaceId', requireWorkspaceMember, getWorkspace);
+router.post('/:workspaceId/assistant', requireWorkspaceMember, askWorkspaceAssistant);
+router.post('/:workspaceId/assistant/index', requireWorkspaceRole('admin'), indexWorkspaceCards);
 router.patch('/:workspaceId', requireWorkspaceRole('admin'), updateWorkspace);
 router.patch(
   '/:workspaceId/logo',

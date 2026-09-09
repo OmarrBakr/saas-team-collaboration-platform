@@ -6,6 +6,12 @@ export const getMyWorkspaces = () =>
 export const getWorkspace = (workspaceId) =>
   request(`/api/v1/workspaces/${workspaceId}`, { method: 'GET' });
 
+export const askWorkspaceAssistant = (workspaceId, question) =>
+  request(`/api/v1/workspaces/${workspaceId}/assistant`, {
+    method: 'POST',
+    body: JSON.stringify({ question }),
+  });
+
 export const getWorkspaceBoards = (workspaceId) =>
   request(`/api/v1/workspaces/${workspaceId}/boards`, { method: 'GET' });
 
