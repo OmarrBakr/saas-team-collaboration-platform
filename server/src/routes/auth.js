@@ -19,9 +19,9 @@ const {
 
 const router = express.Router();
 
-router.use(authLimiter);
-
 router.get('/csrf-token', getCsrfToken);
+
+router.use(authLimiter);
 
 router.post('/register', register);
 router.post('/login', login);
