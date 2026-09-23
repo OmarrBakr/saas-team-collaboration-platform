@@ -3,6 +3,10 @@
   overflow-x: hidden;
 }
 
+.board-loading-state {
+  min-width: min(100%, 28rem);
+}
+
 .board-hero {
   gap: 1rem;
 }

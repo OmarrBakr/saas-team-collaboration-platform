@@ -54,6 +54,7 @@ export default function useBoardDragAndDrop({
       return;
     }
 
+    const previousBoard = board;
     setBoard((current) => {
       if (!current?.columns?.length) return current;
       return {
@@ -69,13 +70,7 @@ export default function useBoardDragAndDrop({
       setBoard(result.board);
     } catch (err) {
       setError(err.message || "Something went wrong");
-      setBoard((current) => {
-        if (!current?.columns?.length) return current;
-        return {
-          ...current,
-          columns: reorderColumns(current.columns, toIndex, fromIndex),
-        };
-      });
+      setBoard(previousBoard);
     }
   };
 
@@ -222,6 +217,7 @@ export default function useBoardDragAndDrop({
       return;
     }
 
+    const previousBoard = board;
     setBoard((current) => {
       if (!current?.columns?.length) return current;
 
@@ -259,6 +255,7 @@ export default function useBoardDragAndDrop({
       setBoard(result.board);
     } catch (err) {
       setError(err.message || "Something went wrong");
+      setBoard(previousBoard);
     }
   };
 

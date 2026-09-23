@@ -40,7 +40,7 @@ const createLimiter = ({ name, windowMs, limit, message, keyGenerator }) =>
 const apiLimiter = createLimiter({
   name: 'api',
   windowMs: 15 * 60 * 1000,
-  limit: 300,
+  limit: 600,
   message: 'Too many requests. Please try again later.',
 });
 

@@ -50,10 +50,21 @@ export default function useBoardPage(workspaceId, boardId) {
   useEffect(() => {
     if (!user || !boardId) return undefined;
 
+    const currentUserId = user?.id || user?._id;
+    if (currentUserId) {
+      // Presence arrives asynchronously from Socket.IO. Show the current
+      // viewer immediately, then replace it with the server's authoritative
+      // list when the join acknowledgement arrives.
+      updateBoardPresence(boardId, [currentUserId.toString()]);
+    }
+
     joinBoardPresence(boardId, ({ boardId: joinedBoardId, userIds }) => {
       updateBoardPresence(joinedBoardId, userIds);
     });
-    return () => leaveBoardPresence(boardId);
+    return () => {
+      leaveBoardPresence(boardId);
+      updateBoardPresence(boardId, []);
+    };
   }, [user, boardId, joinBoardPresence, leaveBoardPresence, updateBoardPresence]);
 
   const { board, setBoard, loading, error, setError, workspaceMembers, isAdmin } = useBoardData(workspaceId, boardId);

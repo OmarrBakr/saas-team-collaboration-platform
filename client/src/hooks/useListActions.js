@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { createList, deleteList, updateList } from "../services/boards";
 
 export default function useListActions({
@@ -8,6 +9,18 @@ export default function useListActions({
   activeList,
   setActiveList,
 }) {
+  const createListMutation = useMutation({
+    mutationFn: (payload) => createList(workspaceId, boardId, payload),
+    onSuccess: (result) => setBoard(result.board),
+  });
+  const updateListMutation = useMutation({
+    mutationFn: ({ listId, payload }) => updateList(workspaceId, boardId, listId, payload),
+    onSuccess: (result) => setBoard(result.board),
+  });
+  const deleteListMutation = useMutation({
+    mutationFn: (listId) => deleteList(workspaceId, boardId, listId),
+    onSuccess: (result) => setBoard(result.board),
+  });
   const [listError, setListError] = useState("");
   const [listForm, setListForm] = useState({ title: "" });
   const [listInitialForm, setListInitialForm] = useState({ title: "" });
@@ -47,15 +60,11 @@ export default function useListActions({
     event.preventDefault();
     const title = listForm.title.trim();
     if (!title) return setListError("List name is required.");
-    setIsCreatingList(true);
     try {
-      const result = await createList(workspaceId, boardId, { title });
-      setBoard(result.board);
+      await createListMutation.mutateAsync({ title });
       setIsListOpen(false);
     } catch (err) {
       setListError(err.message || "Something went wrong");
-    } finally {
-      setIsCreatingList(false);
     }
   };
   const handleEditList = async (event) => {
@@ -63,32 +72,22 @@ export default function useListActions({
     const title = listForm.title.trim();
     if (!title) return setListError("List name is required.");
     if (!activeList?._id) return setListError("Please select a list first.");
-    setIsEditingList(true);
     try {
-      const result = await updateList(workspaceId, boardId, activeList._id, {
-        title,
-      });
-      setBoard(result.board);
+      await updateListMutation.mutateAsync({ listId: activeList._id, payload: { title } });
       setListInitialForm({ title });
       setIsListEditOpen(false);
     } catch (err) {
       setListError(err.message || "Something went wrong");
-    } finally {
-      setIsEditingList(false);
     }
   };
   const handleDeleteList = async () => {
     if (!activeList?._id) return setListError("Please select a list first.");
-    setIsDeletingList(true);
     try {
-      const result = await deleteList(workspaceId, boardId, activeList._id);
-      setBoard(result.board);
+      await deleteListMutation.mutateAsync(activeList._id);
       setIsListDeletingOpen(false);
       setActiveList(null);
     } catch (err) {
       setListError(err.message || "Something went wrong");
-    } finally {
-      setIsDeletingList(false);
     }
   };
   return {
@@ -98,9 +97,9 @@ export default function useListActions({
     isListOpen,
     isListEditOpen,
     isListDeletingOpen,
-    isCreatingList,
-    isEditingList,
-    isDeletingList,
+    isCreatingList: createListMutation.isPending,
+    isEditingList: updateListMutation.isPending,
+    isDeletingList: deleteListMutation.isPending,
     listMenuOpenId,
     hasListEditChanges: listForm.title.trim() !== listInitialForm.title.trim(),
     openListModal,

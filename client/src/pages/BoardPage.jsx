@@ -51,7 +51,17 @@ export default function BoardPage() {
     ...rest
   } = boardPage;
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <main className="workspace-shell workspace-shell--centered">
+        <section className="workspace-empty-card board-loading-state" aria-live="polite" aria-busy="true">
+          <p className="panel-label">Board</p>
+          <h1>Loading board…</h1>
+          <p className="workspace-empty-copy">Fetching the latest project data.</p>
+        </section>
+      </main>
+    );
+  }
 
   if (error || !board) {
     return (

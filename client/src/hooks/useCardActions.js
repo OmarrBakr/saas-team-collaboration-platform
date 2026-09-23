@@ -5,6 +5,7 @@ import {
   updateCard,
   uploadCardAttachment,
 } from "../services/boards";
+import { useMutation } from "@tanstack/react-query";
 
 const findCard = (board, id) =>
   board?.columns
@@ -24,6 +25,26 @@ export default function useCardActions({
   assigneeState,
   modalState,
 }) {
+  const createCardMutation = useMutation({
+    mutationFn: ({ columnId, payload }) => createCard(workspaceId, boardId, columnId, payload),
+    onSuccess: (result) => setBoard(result.board),
+  });
+  const updateCardMutation = useMutation({
+    mutationFn: ({ cardId, payload }) => updateCard(workspaceId, boardId, cardId, payload),
+    onSuccess: (result) => setBoard(result.board),
+  });
+  const deleteCardMutation = useMutation({
+    mutationFn: (cardId) => deleteCard(workspaceId, boardId, cardId),
+    onSuccess: (result) => setBoard(result.board),
+  });
+  const uploadAttachmentMutation = useMutation({
+    mutationFn: ({ cardId, file }) => uploadCardAttachment(workspaceId, boardId, cardId, file),
+    onSuccess: (result) => setBoard(result.board),
+  });
+  const deleteAttachmentMutation = useMutation({
+    mutationFn: ({ cardId, attachmentId }) => deleteCardAttachment(workspaceId, boardId, cardId, attachmentId),
+    onSuccess: (result) => setBoard(result.board),
+  });
   const {
     cardError,
     setCardError,
@@ -100,17 +121,11 @@ export default function useCardActions({
     const title = cardForm.title.trim();
     if (!title) return setCardError("Card title is required.");
     if (!activeList?._id) return setCardError("Please select a list first.");
-    setIsCreatingCard(true);
     try {
-      const result = await createCard(workspaceId, boardId, activeList._id, {
-        title,
-      });
-      setBoard(result.board);
+      await createCardMutation.mutateAsync({ columnId: activeList._id, payload: { title } });
       setIsCardOpen(false);
     } catch (err) {
       setCardError(err.message || "Something went wrong");
-    } finally {
-      setIsCreatingCard(false);
     }
   };
   const handleCardDetailSubmit = async (event) => {
@@ -118,7 +133,6 @@ export default function useCardActions({
     const title = cardDetailForm.title.trim();
     if (!title) return setCardError("Card title is required.");
     if (!activeCard?._id) return setCardError("Please select a card first.");
-    setIsEditingCard(true);
     try {
       const payload = {
         ...cardDetailForm,
@@ -129,67 +143,40 @@ export default function useCardActions({
           color: label.color,
         })),
       };
-      const result = await updateCard(
-        workspaceId,
-        boardId,
-        activeCard._id,
-        payload,
-      );
-      setBoard(result.board);
+      const result = await updateCardMutation.mutateAsync({ cardId: activeCard._id, payload });
       setActiveCard(findCard(result.board, activeCard._id));
       setIsCardDetailOpen(false);
     } catch (err) {
       setCardError(err.message || "Something went wrong");
-    } finally {
-      setIsEditingCard(false);
     }
   };
   const handleDeleteCard = () => setIsCardDeletingOpen(true);
   const confirmDeleteCard = async () => {
     if (!activeCard?._id) return;
-    setIsDeletingCard(true);
     try {
-      const result = await deleteCard(workspaceId, boardId, activeCard._id);
-      setBoard(result.board);
+      await deleteCardMutation.mutateAsync(activeCard._id);
       setIsCardDetailOpen(false);
       setIsCardDeletingOpen(false);
       setActiveCard(null);
     } catch (err) {
       setCardError(err.message || "Something went wrong");
-    } finally {
-      setIsDeletingCard(false);
     }
   };
   const handleAttachmentUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file || !activeCard?._id) return;
-    setIsUploadingAttachment(true);
     try {
-      const result = await uploadCardAttachment(
-        workspaceId,
-        boardId,
-        activeCard._id,
-        file,
-      );
-      setBoard(result.board);
+      const result = await uploadAttachmentMutation.mutateAsync({ cardId: activeCard._id, file });
       setActiveCard(findCard(result.board, activeCard._id));
     } catch (err) {
       setAttachmentError(err.message || "Something went wrong");
-    } finally {
-      setIsUploadingAttachment(false);
-      event.target.value = "";
     }
+    event.target.value = "";
   };
   const handleDeleteAttachment = async (id) => {
     if (!activeCard?._id) return;
     try {
-      const result = await deleteCardAttachment(
-        workspaceId,
-        boardId,
-        activeCard._id,
-        id,
-      );
-      setBoard(result.board);
+      const result = await deleteAttachmentMutation.mutateAsync({ cardId: activeCard._id, attachmentId: id });
       setActiveCard(findCard(result.board, activeCard._id));
     } catch (err) {
       setAttachmentError(err.message || "Something went wrong");
@@ -247,10 +234,10 @@ export default function useCardActions({
     isCardDeletingOpen,
     isAssigneeMenuOpen,
     cardAssigneeDraft,
-    isCreatingCard,
-    isEditingCard,
-    isDeletingCard,
-    isUploadingAttachment,
+    isCreatingCard: createCardMutation.isPending,
+    isEditingCard: updateCardMutation.isPending,
+    isDeletingCard: deleteCardMutation.isPending,
+    isUploadingAttachment: uploadAttachmentMutation.isPending,
     hasCardDetailChanges:
       JSON.stringify(cardDetailForm) !== JSON.stringify(cardDetailInitialForm),
     openCardModal,

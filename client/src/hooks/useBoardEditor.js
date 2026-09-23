@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteBoard, updateBoard } from "../services/boards";
+import { boardQueryKey } from "./useBoardData";
 
 export default function useBoardEditor({
   workspaceId,
@@ -8,6 +10,7 @@ export default function useBoardEditor({
   setBoard,
   navigate,
 }) {
+  const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeletingOpen, setIsDeletingOpen] = useState(false);
   const [isEditingBoard, setIsEditingBoard] = useState(false);
@@ -18,6 +21,17 @@ export default function useBoardEditor({
   const [editInitialForm, setEditInitialForm] = useState({
     name: "",
     description: "",
+  });
+  const updateBoardMutation = useMutation({
+    mutationFn: (payload) => updateBoard(workspaceId, boardId, payload),
+    onSuccess: (result) => setBoard(result.board),
+  });
+  const deleteBoardMutation = useMutation({
+    mutationFn: () => deleteBoard(workspaceId, boardId),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: boardQueryKey(workspaceId, boardId) });
+      navigate(`/workspaces/${workspaceId}`);
+    },
   });
   const openEditModal = () => {
     setEditError("");
@@ -36,13 +50,11 @@ export default function useBoardEditor({
     setEditError("");
     const name = editForm.name.trim();
     if (!name) return setEditError("Board name is required.");
-    setIsEditingBoard(true);
     try {
-      const result = await updateBoard(workspaceId, boardId, {
+      const result = await updateBoardMutation.mutateAsync({
         name,
         description: editForm.description.trim(),
       });
-      setBoard(result.board);
       setEditInitialForm({
         name: result.board?.name || "",
         description: result.board?.description || "",
@@ -50,28 +62,22 @@ export default function useBoardEditor({
       setIsEditOpen(false);
     } catch (err) {
       setEditError(err.message || "Something went wrong");
-    } finally {
-      setIsEditingBoard(false);
     }
   };
   const handleDeleteBoard = async () => {
-    setIsDeletingBoard(true);
     setDeleteError("");
     try {
-      await deleteBoard(workspaceId, boardId);
+      await deleteBoardMutation.mutateAsync();
       setIsDeletingOpen(false);
-      navigate(`/workspaces/${workspaceId}`);
     } catch (err) {
       setDeleteError(err.message || "Something went wrong");
-    } finally {
-      setIsDeletingBoard(false);
     }
   };
   return {
     isEditOpen,
     isDeletingOpen,
-    isEditingBoard,
-    isDeletingBoard,
+    isEditingBoard: updateBoardMutation.isPending,
+    isDeletingBoard: deleteBoardMutation.isPending,
     editError,
     deleteError,
     editForm,
