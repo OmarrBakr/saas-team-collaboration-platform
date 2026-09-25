@@ -88,7 +88,15 @@ export default function WorkspacePage() {
     : error || 'The workspace you are looking for could not be found.';
 
   if (loading) {
-    return;
+    return (
+      <main className="workspace-shell workspace-shell--centered">
+        <section className="workspace-empty-card" aria-live="polite" aria-busy="true">
+          <p className="panel-label">Workspace</p>
+          <h1>Loading workspace…</h1>
+          <p className="workspace-empty-copy">Fetching the workspace, boards, and members.</p>
+        </section>
+      </main>
+    );
   }
 
   if (error || !workspace) {

@@ -1,82 +1,77 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { getWorkspace, getWorkspaceBoards } from "../services/workspaces";
+import { useCallback, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { useAuth } from '../context/AuthContext';
+import { getWorkspace, getWorkspaceBoards } from '../services/workspaces';
+
+export const workspaceQueryKey = (workspaceId) => ['workspace', workspaceId];
+export const workspaceBoardsQueryKey = (workspaceId) => ['workspace-boards', workspaceId];
 
 const idOf = (member) => member?.user?._id || member?.user?.id || member?.user;
-const rolesOf = (members) =>
-  Object.fromEntries(
-    members.map((member) => [idOf(member)?.toString?.(), member.role]),
-  );
+const rolesOf = (members) => Object.fromEntries(
+  members.map((member) => [idOf(member)?.toString?.(), member.role])
+);
 
-export default function useWorkspaceData(
-  workspaceId,
-  { includeBoards = true } = {},
-) {
+export default function useWorkspaceData(workspaceId, { includeBoards = true } = {}) {
   const { user } = useAuth();
-  const [workspace, setWorkspace] = useState(null);
-  const [boards, setBoards] = useState([]);
-  const [members, setMembers] = useState([]);
-  const [invitations, setInvitations] = useState([]);
-  const [memberRoles, setMemberRoles] = useState({});
+  const queryClient = useQueryClient();
+  const [localError, setLocalError] = useState('');
   const [draftMemberRoles, setDraftMemberRoles] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const requests = [getWorkspace(workspaceId)];
-        if (includeBoards) requests.push(getWorkspaceBoards(workspaceId));
-        const [workspaceResult, boardsResult] = await Promise.all(requests);
-        if (cancelled) return;
-        const next = workspaceResult.workspace;
-        const nextMembers = next?.members || [];
-        const roles = rolesOf(nextMembers);
-        setWorkspace(next);
-        setBoards(includeBoards ? boardsResult?.boards || [] : []);
-        setMembers(nextMembers);
-        setInvitations(next?.invitations || []);
-        setMemberRoles(roles);
-        setDraftMemberRoles(roles);
-      } catch (err) {
-        if (!cancelled) setError(err.message || "Something went wrong");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [workspaceId, includeBoards]);
+
+  const workspaceQuery = useQuery({
+    queryKey: workspaceQueryKey(workspaceId),
+    queryFn: async () => (await getWorkspace(workspaceId)).workspace,
+    enabled: Boolean(workspaceId && user),
+  });
+  const boardsQuery = useQuery({
+    queryKey: workspaceBoardsQueryKey(workspaceId),
+    queryFn: async () => (await getWorkspaceBoards(workspaceId)).boards || [],
+    enabled: Boolean(workspaceId && user && includeBoards),
+  });
+
+  const setWorkspace = useCallback((updater) => {
+    queryClient.setQueryData(workspaceQueryKey(workspaceId), (current) =>
+      typeof updater === 'function' ? updater(current) : updater
+    );
+  }, [queryClient, workspaceId]);
+  const setBoards = useCallback((updater) => {
+    queryClient.setQueryData(workspaceBoardsQueryKey(workspaceId), (current = []) =>
+      typeof updater === 'function' ? updater(current) : updater
+    );
+  }, [queryClient, workspaceId]);
+
+  const workspace = workspaceQuery.data || null;
+  const members = workspace?.members || [];
+  const invitations = workspace?.invitations || [];
+  const boards = includeBoards ? boardsQuery.data || [] : [];
+  const memberRoles = useMemo(() => rolesOf(members), [members]);
   const userId = user?._id || user?.id;
   const email = user?.email?.toLowerCase?.();
-  const currentMember = members.find(
-    (member) =>
-      idOf(member)?.toString?.() === userId?.toString?.() ||
-      (email && member.user?.email?.toLowerCase?.() === email),
+  const currentMember = members.find((member) =>
+    idOf(member)?.toString?.() === userId?.toString?.() ||
+    (email && member.user?.email?.toLowerCase?.() === email)
   );
-  const adminCount = members.filter((member) => member.role === "admin").length;
+  const adminCount = members.filter((member) => member.role === 'admin').length;
+
   return {
     workspace,
     setWorkspace,
     boards,
     setBoards,
     members,
-    setMembers,
     invitations,
-    setInvitations,
     memberRoles,
-    setMemberRoles,
     draftMemberRoles,
     setDraftMemberRoles,
-    loading,
-    error,
-    setError,
+    loading: workspaceQuery.isPending || (includeBoards && boardsQuery.isPending),
+    workspaceLoading: workspaceQuery.isPending,
+    boardsLoading: includeBoards && boardsQuery.isPending,
+    refreshing: workspaceQuery.isFetching || (includeBoards && boardsQuery.isFetching),
+    error: localError || workspaceQuery.error?.message || boardsQuery.error?.message || '',
+    setError: setLocalError,
     currentMember,
     currentMemberId: idOf(currentMember),
-    isAdmin: currentMember?.role === "admin",
-    isOnlyAdmin: currentMember?.role === "admin" && adminCount === 1,
+    isAdmin: currentMember?.role === 'admin',
+    isOnlyAdmin: currentMember?.role === 'admin' && adminCount === 1,
   };
 }

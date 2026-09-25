@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { workspaceQueryKey } from "./useWorkspaceData";
 import {
-  getWorkspace,
   inviteWorkspaceMember,
   removeWorkspaceMember,
   updateWorkspaceMemberRole,
@@ -8,44 +10,92 @@ import {
 
 const getMemberId = (member) =>
   member?.user?._id || member?.user?.id || member?.user;
-const getRoles = (members) =>
-  Object.fromEntries(
-    members.map((member) => [getMemberId(member)?.toString?.(), member.role]),
-  );
-
 export default function useWorkspaceMembers({
   workspaceId,
   members,
   invitations,
-  setWorkspace,
-  setMembers,
-  setInvitations,
   memberRoles,
-  setMemberRoles,
   draftMemberRoles,
   setDraftMemberRoles,
 }) {
+  const queryClient = useQueryClient();
+  const inviteMemberMutation = useMutation({
+    mutationFn: ({ email }) => inviteWorkspaceMember(workspaceId, { email }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceQueryKey(workspaceId) }),
+  });
+  const removeMemberMutation = useMutation({
+    mutationFn: (id) => removeWorkspaceMember(workspaceId, id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: workspaceQueryKey(workspaceId) });
+      const previousWorkspace = queryClient.getQueryData(workspaceQueryKey(workspaceId));
+      queryClient.setQueryData(workspaceQueryKey(workspaceId), (current) =>
+        current
+          ? {
+              ...current,
+              members: (current.members || []).filter(
+                (member) => getMemberId(member)?.toString?.() !== id?.toString?.(),
+              ),
+            }
+          : current,
+      );
+      return { previousWorkspace };
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previousWorkspace) {
+        queryClient.setQueryData(workspaceQueryKey(workspaceId), context.previousWorkspace);
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceQueryKey(workspaceId) }),
+  });
+  const updateRolesMutation = useMutation({
+    mutationFn: (changedMembers) =>
+      Promise.all(
+        changedMembers.map(({ id, role }) =>
+          updateWorkspaceMemberRole(workspaceId, id, role),
+        ),
+      ),
+    onMutate: async (changedMembers) => {
+      await queryClient.cancelQueries({ queryKey: workspaceQueryKey(workspaceId) });
+      const previousWorkspace = queryClient.getQueryData(workspaceQueryKey(workspaceId));
+      const changedRoles = new Map(
+        changedMembers.map(({ id, role }) => [id?.toString?.(), role]),
+      );
+      queryClient.setQueryData(workspaceQueryKey(workspaceId), (current) =>
+        current
+          ? {
+              ...current,
+              members: (current.members || []).map((member) => {
+                const id = getMemberId(member)?.toString?.();
+                return changedRoles.has(id)
+                  ? { ...member, role: changedRoles.get(id) }
+                  : member;
+              }),
+            }
+          : current,
+      );
+      return { previousWorkspace };
+    },
+    onError: (_error, _changedMembers, context) => {
+      if (context?.previousWorkspace) {
+        queryClient.setQueryData(workspaceQueryKey(workspaceId), context.previousWorkspace);
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceQueryKey(workspaceId) }),
+  });
   const [removingMemberId, setRemovingMemberId] = useState("");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteError, setInviteError] = useState("");
   const [inviteMessage, setInviteMessage] = useState("");
-  const [isInviting, setIsInviting] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState(null);
-  const [isSavingRoles, setIsSavingRoles] = useState(false);
   const [manageError, setManageError] = useState("");
 
   const refreshMembers = async () => {
-    const result = await getWorkspace(workspaceId);
-    const nextWorkspace = result.workspace;
-    const nextMembers = nextWorkspace?.members || [];
-    const roles = getRoles(nextMembers);
-    setWorkspace(nextWorkspace);
-    setMembers(nextMembers);
-    setInvitations(nextWorkspace?.invitations || []);
-    setMemberRoles(roles);
-    setDraftMemberRoles(roles);
+    await queryClient.refetchQueries({
+      queryKey: workspaceQueryKey(workspaceId),
+      type: "active",
+    });
   };
   const handleInviteMember = async (event) => {
     event.preventDefault();
@@ -69,29 +119,25 @@ export default function useWorkspaceMembers({
       return setInviteError(
         "An active invitation already exists for this email.",
       );
-    setIsInviting(true);
     try {
-      const result = await inviteWorkspaceMember(workspaceId, { email });
+      const result = await inviteMemberMutation.mutateAsync({ email });
       await refreshMembers();
       setInviteMessage(result.msg || `Invitation sent to ${email}`);
       setInviteEmail("");
     } catch (err) {
       setInviteError(err.message || "Something went wrong");
-    } finally {
-      setIsInviting(false);
     }
   };
   const handleRemoveMember = async (id) => {
     setRemovingMemberId(id?.toString?.() || id);
     setManageError("");
     try {
-      await removeWorkspaceMember(workspaceId, id);
+      await removeMemberMutation.mutateAsync(id);
       await refreshMembers();
     } catch (err) {
       setManageError(err.message || "Something went wrong");
-    } finally {
-      setRemovingMemberId("");
     }
+    setRemovingMemberId("");
   };
   const openManageModal = () => {
     setManageError("");
@@ -113,24 +159,17 @@ export default function useWorkspaceMembers({
       return id && draftMemberRoles[id] !== memberRoles[id];
     });
     if (!changed.length) return;
-    setIsSavingRoles(true);
     setManageError("");
     try {
-      await Promise.all(
+      await updateRolesMutation.mutateAsync(
         changed.map((member) => {
           const id = getMemberId(member)?.toString?.();
-          return updateWorkspaceMemberRole(
-            workspaceId,
-            id,
-            draftMemberRoles[id],
-          );
+          return { id, role: draftMemberRoles[id] };
         }),
       );
       await refreshMembers();
     } catch (err) {
       setManageError(err.message || "Something went wrong");
-    } finally {
-      setIsSavingRoles(false);
     }
   };
   const openRemoveMemberModal = (member) => {
@@ -155,10 +194,10 @@ export default function useWorkspaceMembers({
     setInviteEmail,
     inviteError,
     inviteMessage,
-    isInviting,
+    isInviting: inviteMemberMutation.isPending,
     handleInviteMember,
     memberToRemove,
-    isSavingRoles,
+    isSavingRoles: updateRolesMutation.isPending,
     manageError,
     memberRoles,
     draftMemberRoles,

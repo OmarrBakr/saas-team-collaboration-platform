@@ -23,10 +23,7 @@ export default function useWorkspacePage(workspaceId, options = {}) {
     members: data.members,
     invitations: data.invitations,
     setWorkspace: data.setWorkspace,
-    setMembers: data.setMembers,
-    setInvitations: data.setInvitations,
     memberRoles: data.memberRoles,
-    setMemberRoles: data.setMemberRoles,
     draftMemberRoles: data.draftMemberRoles,
     setDraftMemberRoles: data.setDraftMemberRoles,
   });

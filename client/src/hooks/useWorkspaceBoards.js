@@ -1,14 +1,26 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { createBoard } from "../services/boards";
+import { workspaceBoardsQueryKey } from "./useWorkspaceData";
 
 export default function useWorkspaceBoards({
   workspaceId,
   boards = [],
   setBoards,
 }) {
+  const queryClient = useQueryClient();
+  const createBoardMutation = useMutation({
+    mutationFn: (payload) => createBoard(workspaceId, payload),
+    onSuccess: (result) => {
+      setBoards((current) => [...current, result.board]);
+      queryClient.invalidateQueries({
+        queryKey: workspaceBoardsQueryKey(workspaceId),
+      });
+    },
+  });
   const [isCreateBoardOpen, setIsCreateBoardOpen] = useState(false);
-  const [isCreatingBoard, setIsCreatingBoard] = useState(false);
   const [createBoardError, setCreateBoardError] = useState("");
   const [createBoardForm, setCreateBoardForm] = useState({
     name: "",
@@ -33,19 +45,15 @@ export default function useWorkspaceBoards({
       return;
     }
 
-    setIsCreatingBoard(true);
     setCreateBoardError("");
     try {
-      const result = await createBoard(workspaceId, {
+      await createBoardMutation.mutateAsync({
         name,
         description: createBoardForm.description.trim(),
       });
-      setBoards([...boards, result.board]);
       setIsCreateBoardOpen(false);
     } catch (err) {
       setCreateBoardError(err.message || "Something went wrong");
-    } finally {
-      setIsCreatingBoard(false);
     }
   };
 
@@ -53,7 +61,7 @@ export default function useWorkspaceBoards({
     boards,
     isCreateBoardOpen,
     setIsCreateBoardOpen,
-    isCreatingBoard,
+    isCreatingBoard: createBoardMutation.isPending,
     createBoardError,
     createBoardForm,
     openCreateBoardModal,
