@@ -6,6 +6,7 @@ import { getWorkspace, getWorkspaceBoards } from '../services/workspaces';
 
 export const workspaceQueryKey = (workspaceId) => ['workspace', workspaceId];
 export const workspaceBoardsQueryKey = (workspaceId) => ['workspace-boards', workspaceId];
+export const dashboardWorkspacesQueryKey = ['my-workspaces'];
 
 const idOf = (member) => member?.user?._id || member?.user?.id || member?.user;
 const rolesOf = (members) => Object.fromEntries(

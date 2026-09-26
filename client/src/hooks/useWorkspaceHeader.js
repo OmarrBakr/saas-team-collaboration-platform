@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { workspaceQueryKey } from "./useWorkspaceData";
+import {
+  dashboardWorkspacesQueryKey,
+  workspaceQueryKey,
+} from "./useWorkspaceData";
 import {
   deleteWorkspace,
   leaveWorkspace,
@@ -35,6 +38,7 @@ export default function useWorkspaceHeader({
     onSuccess: (result) => {
       setWorkspace(result.workspace);
       queryClient.invalidateQueries({ queryKey: workspaceQueryKey(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: dashboardWorkspacesQueryKey });
     },
   });
   const uploadWorkspaceLogoMutation = useMutation({
@@ -42,15 +46,22 @@ export default function useWorkspaceHeader({
     onSuccess: (result) => {
       setWorkspace(result.workspace);
       queryClient.invalidateQueries({ queryKey: workspaceQueryKey(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: dashboardWorkspacesQueryKey });
     },
   });
   const leaveWorkspaceMutation = useMutation({
     mutationFn: () => leaveWorkspace(workspaceId),
-    onSuccess: () => navigate("/"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dashboardWorkspacesQueryKey });
+      navigate("/");
+    },
   });
   const deleteWorkspaceMutation = useMutation({
     mutationFn: () => deleteWorkspace(workspaceId),
-    onSuccess: () => navigate("/"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dashboardWorkspacesQueryKey });
+      navigate("/");
+    },
   });
   const [isLeaveOpen, setIsLeaveOpen] = useState(false);
   const [destructiveAction, setDestructiveAction] = useState("leave");

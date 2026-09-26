@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import DashboardTopBar from '../components/dashboard/DashboardTopBar';
 import CreateWorkspaceModal from '../components/workspaces/CreateWorkspaceModal';
@@ -10,6 +11,7 @@ import {
   uploadWorkspaceLogo,
 } from '../services/workspaces';
 import '../styles/dashboard.css';
+import { dashboardWorkspacesQueryKey } from '../hooks/useWorkspaceData';
 
 const formatDate = (value) =>
   new Intl.DateTimeFormat('en', {
@@ -33,35 +35,57 @@ function getWorkspaceInitials(name) {
 export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [workspaces, setWorkspaces] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const queryClient = useQueryClient();
+  const workspacesQuery = useQuery({
+    queryKey: dashboardWorkspacesQueryKey,
+    queryFn: async () => (await getMyWorkspaces()).workspaces || [],
+    enabled: Boolean(user),
+  });
+  const createWorkspaceMutation = useMutation({
+    mutationFn: async ({ name, description, logoFile }) => {
+      const { workspace } = await createWorkspace({ name, description });
+      if (logoFile) await uploadWorkspaceLogo(workspace._id, logoFile);
+      return workspace;
+    },
+    onMutate: async ({ name, description }) => {
+      await queryClient.cancelQueries({ queryKey: dashboardWorkspacesQueryKey });
+      const previousWorkspaces = queryClient.getQueryData(dashboardWorkspacesQueryKey) || [];
+      const optimisticWorkspace = {
+        _id: `optimistic-${Date.now()}`,
+        name,
+        description,
+        members: [],
+        updatedAt: new Date().toISOString(),
+        isOptimistic: true,
+      };
+      queryClient.setQueryData(dashboardWorkspacesQueryKey, [
+        ...previousWorkspaces,
+        optimisticWorkspace,
+      ]);
+      return { previousWorkspaces };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousWorkspaces) {
+        queryClient.setQueryData(
+          dashboardWorkspacesQueryKey,
+          context.previousWorkspaces,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: dashboardWorkspacesQueryKey });
+    },
+  });
+  const workspaces = workspacesQuery.data || [];
+  const loading = workspacesQuery.isPending;
+  const error = workspacesQuery.error?.message || '';
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [createForm, setCreateForm] = useState({
     name: '',
     description: '',
     logoFile: null,
   });
-
-  useEffect(() => {
-    const loadWorkspaces = async () => {
-      setLoading(true);
-      setError('');
-
-      try {
-        const { workspaces: workspaceList } = await getMyWorkspaces();
-        setWorkspaces(workspaceList);
-      } catch (err) {
-        setError(err.message || 'Something went wrong');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadWorkspaces();
-  }, []);
 
   const handleCreateChange = (event) => {
     const { name, value, files } = event.target;
@@ -80,27 +104,17 @@ export default function DashboardPage() {
       return;
     }
 
-    setIsCreating(true);
-
     try {
-      const { workspace } = await createWorkspace({
+      await createWorkspaceMutation.mutateAsync({
         name: createForm.name.trim(),
         description: createForm.description.trim(),
+        logoFile: createForm.logoFile,
       });
-
-      if (createForm.logoFile) {
-        await uploadWorkspaceLogo(workspace._id, createForm.logoFile);
-      }
 
       setIsCreateOpen(false);
       setCreateForm({ name: '', description: '', logoFile: null });
-
-      const { workspaces: workspaceList } = await getMyWorkspaces();
-      setWorkspaces(workspaceList);
     } catch (err) {
       setCreateError(err.message || 'Something went wrong');
-    } finally {
-      setIsCreating(false);
     }
   };
 
@@ -146,9 +160,15 @@ export default function DashboardPage() {
                   key={workspace._id}
                   className="workspace-card workspace-card-link"
                   role="link"
-                  tabIndex={0}
-                  onClick={() => navigate(`/workspaces/${workspace._id}`)}
+                  tabIndex={workspace.isOptimistic ? -1 : 0}
+                  aria-busy={workspace.isOptimistic}
+                  onClick={() => {
+                    if (!workspace.isOptimistic) {
+                      navigate(`/workspaces/${workspace._id}`);
+                    }
+                  }}
                   onKeyDown={(event) => {
+                    if (workspace.isOptimistic) return;
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
                       navigate(`/workspaces/${workspace._id}`);
@@ -209,7 +229,7 @@ export default function DashboardPage() {
           onChange={handleCreateChange}
           onSubmit={handleCreateSubmit}
           onClose={() => setIsCreateOpen(false)}
-          isSubmitting={isCreating}
+          isSubmitting={createWorkspaceMutation.isPending}
           error={createError}
         />
       )}
